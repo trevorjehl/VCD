@@ -35,12 +35,22 @@ def readFile(filename):
 
 
 def spectralAnalysis(samples, sample_rate):
+    """
+    After being passed in sample (amplitude information) and a sample rate (sample
+    frequecy), completes a FFT analysis passing the information from time domain to the
+    frequency domain.
+    """
     print("Doing spectral analysis...")
     frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate)
+    
     return frequencies, times, spectrogram
 
 
 def makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end):
+    """
+    Using opened .wav file, plots the sound amplitude with respect to time,
+    limiting the x-axis using passed in parameters sound_start & sound_end.
+    """
     print("Making amplitude graph...")
     plt.subplot(2,1,1)
     plt.ylabel('Amplitude')
@@ -49,7 +59,13 @@ def makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end):
 
 
 def makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min_freq, max_freq):
+    """
+    After spectral analysis is performed, this function takes that 
+    information and plots it, limiting the axes using passed in 
+    parameters sound_start, sound_end, min_freq, and max_freq.
+    """
     print("Making spectrogram...")
+    
     # Tell matplot that the following code refers to the second plot.
     plt.subplot(2,1,2)
 
@@ -71,14 +87,12 @@ def doAnalysis(filename, sound_start, sound_end, min_freq, max_freq):
     plt.show()
     
 
-
 def main():
     print('Main running.')
     args = sys.argv[1:]
 
     if len(args) != 5:
-        print("Imporper arguments.")
-        raise SystemExit(0)
+        raise Exception("Imporper arguments. Must pass in 5 parameters: filename, sound_start, sound_end, min_freq, max_freq.")
     
     filename = args[0]
     sound_start = float(args[1])
