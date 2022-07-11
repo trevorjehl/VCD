@@ -15,7 +15,6 @@ import numpy as np
 
 # Modify default matplotlib behavior.
 plt.rcParams['figure.dpi'] = 100
-plt.rcParams['figure.figsize'] = (9, 7)
 
 sound_start = 0
 sound_end = None
@@ -36,15 +35,15 @@ time = (np.arange(samples.shape[0]) / samples.shape[0]) * audio_length
 if sound_end == None:
     sound_end = audio_length
 
-# plt.subplot(2,1,1)
-# plt.ylabel('Amplitude')
-# plt.plot(time, floating_point)
-# plt.xlim([sound_start, sound_end])
+plt.subplot(2,1,1)
+plt.ylabel('Amplitude')
+plt.plot(time, floating_point)
+plt.xlim([sound_start, sound_end])
 
 # Compute a spectrogram with consecutive Fourier transforms.
 frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate, nperseg = 2048)
 
-# plt.subplot(2,1,2)
+plt.subplot(2,1,2)
 
 # Log calculatio accounts for data scaling
 plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap='jet')

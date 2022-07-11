@@ -1,0 +1,93 @@
+"""
+2022 Trevor Jehl, CNMC
+
+Spectrogram generation script for audio sample visualization. Takes in a mono wav file,
+generates a spectrographic view of file
+"""
+
+import sys
+import matplotlib
+import matplotlib.pyplot as plt
+from scipy.io import wavfile
+from scipy import signal
+import numpy as np
+# Modify default matplotlib behavior.
+plt.rcParams['figure.dpi'] = 100
+
+def readFile(filename):
+    """
+    Opens wav file, returns sample_rate, samples, floating_point, audio_length, time_array.
+    
+    Sample_rate = the sampling rate of the wav file
+    samples = the value of the sound at a sample
+    floating_point = converts the sound amplitude to a range from -1:1 for graphing convenience
+    audio_length = length of the audio file
+    time_array = array of time values for each second (converts file from sample rate in x-axis to time in s)
+    """
+    print("Reading file...")
+
+    sample_rate, samples = wavfile.read(filename)
+    floating_point = samples / max(samples)
+    audio_length = samples.shape[0] / sample_rate
+    time_array = (np.arange(samples.shape[0]) / samples.shape[0]) * audio_length
+
+    return sample_rate, samples, floating_point, audio_length, time_array
+
+
+def spectralAnalysis(samples, sample_rate):
+    print("Doing spectral analysis...")
+    frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate)
+    return frequencies, times, spectrogram
+
+
+def makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end):
+    print("Making amplitude graph...")
+    plt.subplot(2,1,1)
+    plt.ylabel('Amplitude')
+    plt.plot(time_array, floating_point)
+    plt.xlim(sound_start, sound_end)
+
+
+def makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min_freq, max_freq):
+    print("Making spectrogram...")
+    # Tell matplot that the following code refers to the second plot.
+    plt.subplot(2,1,2)
+
+    plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap='jet')
+
+    plt.ylabel('Frequency [Hz]')
+    plt.xlabel('Time [sec]')
+    plt.xlim(sound_start, sound_end)
+    plt.ylim([min_freq, max_freq])
+    plt.show()
+
+
+def doAnalysis(filename, sound_start, sound_end, min_freq, max_freq):
+    print("Analyzing file...")
+    sample_rate, samples, floating_point, audio_length, time_array = readFile(filename)
+    frequencies, times, spectrogram = spectralAnalysis(samples, sample_rate)
+    makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end)
+    makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min_freq, max_freq)
+    plt.show()
+    
+
+
+def main():
+    print('Main running.')
+    args = sys.argv[1:]
+
+    if len(args) != 5:
+        print("Imporper arguments.")
+        raise SystemExit(0)
+    
+    filename = args[0]
+    sound_start = float(args[1])
+    sound_end = float(args[2])
+    min_freq = int(args[3])
+    max_freq = int(args[4])
+
+    doAnalysis(filename, sound_start, sound_end, min_freq, max_freq)
+
+
+if __name__ == '__main__':
+    main()
