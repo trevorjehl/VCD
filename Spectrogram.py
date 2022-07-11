@@ -8,7 +8,6 @@ generates a spectrographic view of file
 import sys
 import matplotlib
 import matplotlib.pyplot as plt
-from more_itertools import sample
 from scipy.io import wavfile
 from scipy import signal
 import numpy as np
