@@ -1,82 +1,57 @@
 """
 2022 Trevor Jehl, CNMC
 
-Spectrogram generation script for audio sample visualization. Takes in a wav file,
-generates a spectrographic ciew of.
+Spectrogram generation script for audio sample visualization. Takes in a mono wav file,
+generates a spectrographic view of file
 """
-from email.mime import audio
+
 import sys
+import matplotlib
 import matplotlib.pyplot as plt
 from more_itertools import sample
 from scipy.io import wavfile
 from scipy import signal
 import numpy as np
-np.set_printoptions(threshold=sys.maxsize)
 
-# Import relevant wav file, generating two elements: the Sample Rate (fs) and the data (samples)
-sample_rate, samples = wavfile.read('piano_sampleM.wav')
+# Modify default matplotlib behavior.
+plt.rcParams['figure.dpi'] = 100
+plt.rcParams['figure.figsize'] = (9, 7)
 
-audio_length = len(samples) / sample_rate
-print(audio_length)
-# # Compute a spectrogram with consecutive Fourier transforms.
-# frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate, nperseg=12288)
+sound_start = 0
+sound_end = None
 
-# plt.pcolormesh(times, frequencies, spectrogram, cmap='jet')
-# plt.ylabel('Frequency [Hz]')
-# plt.xlabel('Time [sec]')
-# plt.ylim([0, 1000])
+min_freq = 0
+max_freq = 8000
 
-# plt.show()
+# Read relevant wav file, generating two elements: the Sample Rate (fs) and the data (samples)
+sample_rate, samples = wavfile.read('orchestra.wav')
 
+# Convert the sound samples to floating point values ranging from -1 to 1
+floating_point = samples / max(samples)
 
+audio_length = samples.shape[0] / sample_rate
 
+time = (np.arange(samples.shape[0]) / samples.shape[0]) * audio_length
 
+if sound_end == None:
+    sound_end = audio_length
 
-
-# # Read the wav file (mono)
-# samplingFrequency, signalData = wavfile.read('piano_sample.wav')
-
-# # print(samplingFrequency, signalData)
-
-# # Plot the signal read from wav file
-# plt.subplot(211)
-# plt.title('Spectrogram of a wav file with piano music')
-
-# plt.plot(signalData)
-# plt.xlabel('Sample')
+# plt.subplot(2,1,1)
 # plt.ylabel('Amplitude')
+# plt.plot(time, floating_point)
+# plt.xlim([sound_start, sound_end])
 
-# # plt.subplot(212)
-# # plt.specgram(signalData,Fs=samplingFrequency)
-# # plt.xlabel('Time')
-# # plt.ylabel('Frequency')
+# Compute a spectrogram with consecutive Fourier transforms.
+frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate, nperseg = 2048)
 
-# plt.show()
+# plt.subplot(2,1,2)
 
+# Log calculatio accounts for data scaling
+plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap='jet')
 
+plt.ylabel('Frequency [Hz]')
+plt.xlabel('Time [sec]')
+plt.xlim([sound_start, sound_end])
+plt.ylim([min_freq, max_freq])
 
-
-
-
-
-
-
-
-
-# def main():
-
-#     args = sys.argv[1:]
-
-#     # if len(args) == 1:
-#     #     # filename
-#     #     counts = read_counts(args[0])
-#     #     print_counts(counts)
-
-#     # if len(args) == 3 and args[0] == '-top':
-#     #     # -top n filename
-#     #     n = int(args[1])
-#     #     counts = read_counts(args[2])
-#     #     print_top(counts, n)
-
-# if __name__ == '__main__':
-#     main()
+plt.show()
