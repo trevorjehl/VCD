@@ -128,3 +128,4 @@ dmypy.json
 # Pyre type checker
 .pyre/
 test_func.py
+.DS_Store
