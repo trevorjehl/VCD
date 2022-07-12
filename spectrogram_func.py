@@ -12,15 +12,15 @@ TODO:
 ##########################################################################################
 To use the program, navigate to the relevant directory in terminal. Use syntax as follows:
 
-# >>> python3 spectrogram_func.py filename.wav starting_time ending_time minimum_frequency maximum_frequency
-    starting_time = Starting time (in s) to graph (i.e. minimum x-axis value)
-    ending_time = Ending time (in s) to graph (i.e. maximum x-axis value). If ending time == "None", 
+>>> python3 spectrogram_func.py filename.wav starting_time ending_time minimum_frequency maximum_frequency
+
+    - starting_time = Starting time (in s) to graph (i.e. minimum x-axis value)
+    - ending_time = Ending time (in s) to graph (i.e. maximum x-axis value). If ending time == "None", 
 the program will default to the audio file's duration.
-    minimum_frequency = Lowest frequency (Hz) to show on graph (i.e. minimum y-axis value)
-    maximum_frequency = Highest frequency (Hz) to show on graph (i.e. maximum y-axis value)
+    - minimum_frequency = Lowest frequency (Hz) to show on graph (i.e. minimum y-axis value)
+    - maximum_frequency = Highest frequency (Hz) to show on graph (i.e. maximum y-axis value)
 """
 import sys
-import matplotlib
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
 from scipy import signal
@@ -43,8 +43,10 @@ def readFile(filename):
 
     sample_rate, samples = wavfile.read(filename)
 
+    # If the passed in audio file is stereo, use
+    # the audio from only one channel.
     if len(np.shape(samples)) != 1:
-        raise Exception("Selected file is stereo. Please select a mono wav file.")
+        samples = samples[0: ,1]
 
     floating_point = samples / max(samples)
     audio_length = samples.shape[0] / sample_rate
@@ -65,7 +67,7 @@ def spectralAnalysis(samples, sample_rate):
     return frequencies, times, spectrogram
 
 
-def makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end):
+def makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end, filename):
     """
     Using opened .wav file, plots the sound amplitude with respect to time,
     limiting the x-axis using passed in parameters sound_start & sound_end.
@@ -75,6 +77,7 @@ def makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end):
     plt.ylabel('Amplitude')
     plt.plot(time_array, floating_point)
     plt.xlim(sound_start, sound_end)
+    plt.title(f'{filename} Sound Analysis')
 
 
 def makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min_freq, max_freq):
@@ -105,7 +108,7 @@ def doAnalysis(filename, sound_start, sound_end, min_freq, max_freq):
         sound_end = audio_length
 
     frequencies, times, spectrogram = spectralAnalysis(samples, sample_rate)
-    makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end)
+    makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end, filename)
     makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min_freq, max_freq)
     plt.show()
     
