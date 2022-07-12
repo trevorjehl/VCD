@@ -24,7 +24,7 @@ import sys
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
 from scipy import signal
-from scipy.signal import butter, sosfilt, sosfreqz
+from scipy.signal import butter, sosfilt
 import numpy as np
 # Modify default matplotlib behavior.
 plt.rcParams['figure.dpi'] = 100
@@ -73,7 +73,12 @@ def spectralAnalysis(samples, sample_rate):
     frequency domain.
     """
     print("Doing spectral analysis...")
-    frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate, nperseg = 4096, noverlap = 4096 // 4, window = 'hamming')
+
+    frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate, 
+        nperseg = 4096,
+        noverlap = 4096 // 4,
+        nfft = 4096*1, 
+        window = 'hamming')
     
     return frequencies, times, spectrogram
 
@@ -102,8 +107,10 @@ def makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min
     # Tell matplot that the following code refers to the second plot.
     plt.subplot(2, 1, 2)
 
+    # Create spectrogram
     plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap='magma')
 
+    # Stylize graphs
     plt.ylabel('Frequency [Hz]')
     plt.yscale('log')
     plt.xlabel('Time [sec]')
@@ -113,15 +120,24 @@ def makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min
 
 
 def doAnalysis(filename, sound_start, sound_end, min_freq, max_freq):
+    """
+    Given a filename in the directory, the starting and ending 
+    times (in s) to graph of the sound file, and the minimum and maximum
+    frequencies to graph, return a 
+    """
     print("Analyzing file...")
     sample_rate, samples, floating_point, audio_length, time_array = readFile(filename)
 
     if sound_end == None:
         sound_end = audio_length
 
+    # Pass commands into butterworth band pass filter
     samples = butter_bandpass(samples, min_freq, max_freq, sample_rate, 5)
 
+    # Do spectral analysis on wav file
     frequencies, times, spectrogram = spectralAnalysis(samples, sample_rate)
+
+    # Make graphs.
     makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end, filename)
     makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min_freq, max_freq)
     plt.show()
@@ -131,17 +147,20 @@ def main():
     print('Main running.')
     args = sys.argv[1:]
 
+    # If the user has provided insufficient command line arguments, raise error
     if len(args) != 5:
-        raise Exception("Imporper arguments. Must pass in 5 parameters: filename, sound_start, sound_end, min_freq, max_freq.")
+        raise Exception("Improper arguments. Must pass in 5 parameters: filename, sound_start, sound_end, min_freq, max_freq.")
     
     filename = args[0]
     sound_start = float(args[1])
     
+    # Logic for using the entire sound file
     if args[2] == "None":
         sound_end = None
     else:
         sound_end = float(args[2])
     
+    # Frequencies can only be int values
     min_freq = int(args[3])
     max_freq = int(args[4])
 
