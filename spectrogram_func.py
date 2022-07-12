@@ -25,6 +25,10 @@ import matplotlib.pyplot as plt
 from scipy.io import wavfile
 from scipy import signal
 import numpy as np
+
+import librosa 
+import librosa.display
+
 # Modify default matplotlib behavior.
 plt.rcParams['figure.dpi'] = 100
 
@@ -55,17 +59,16 @@ def readFile(filename):
     return sample_rate, samples, floating_point, audio_length, time_array
 
 
-def spectralAnalysis(samples, sample_rate):
+def spectralAnalysis(samples):
     """
     After being passed in sample (amplitude information) and a sample rate (sample
     frequecy), completes a FFT analysis passing the information from time domain to the
     frequency domain.
     """
     print("Doing spectral analysis...")
-    frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate)
-    
-    return frequencies, times, spectrogram
-
+    D = librosa.stft(samples)
+    S_db = librosa.amplitude_to_db(np.abs(D),ref=np.max)
+    return D, S_db
 
 def makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end, filename):
     """
@@ -80,7 +83,7 @@ def makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end, filen
     plt.title(f'{filename} Sound Analysis')
 
 
-def makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min_freq, max_freq):
+def makeSpectrogram(S_db):
     """
     After spectral analysis is performed, this function takes that 
     information and plots it, limiting the axes using passed in 
@@ -89,15 +92,18 @@ def makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min
     print("Making spectrogram...")
     
     # Tell matplot that the following code refers to the second plot.
-    plt.subplot(2, 1, 2)
+    # plt.subplot(2, 1, 2)
 
-    plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap='jet')
+    # plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap='jet')
 
-    plt.ylabel('Frequency [Hz]')
-    plt.xlabel('Time [sec]')
-    plt.xlim(sound_start, sound_end)
-    plt.ylim([min_freq, max_freq])
-    plt.show()
+    fig, ax = plt.subplots(figsize=(10,5))
+    img = librosa.display.specshow(S_db, x_axis='time', y_axis='log', ax=ax)
+
+    # plt.ylabel('Frequency [Hz]')
+    # plt.xlabel('Time [sec]')
+    # plt.xlim(sound_start, sound_end)
+    # plt.ylim([min_freq, max_freq])
+    # plt.show()
 
 
 def doAnalysis(filename, sound_start, sound_end, min_freq, max_freq):
@@ -107,9 +113,9 @@ def doAnalysis(filename, sound_start, sound_end, min_freq, max_freq):
     if sound_end == None:
         sound_end = audio_length
 
-    frequencies, times, spectrogram = spectralAnalysis(samples, sample_rate)
-    makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end, filename)
-    makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min_freq, max_freq)
+    D, S_db = spectralAnalysis(floating_point)
+    # makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end, filename)
+    makeSpectrogram(S_db)
     plt.show()
     
 
