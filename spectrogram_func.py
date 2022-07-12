@@ -73,8 +73,7 @@ def spectralAnalysis(samples, sample_rate):
     frequency domain.
     """
     print("Doing spectral analysis...")
-    frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate)
-    # , nperseg = 2048)
+    frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate, nperseg = 4096, noverlap = 4096 // 4, window = 'hamming')
     
     return frequencies, times, spectrogram
 
@@ -103,9 +102,10 @@ def makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min
     # Tell matplot that the following code refers to the second plot.
     plt.subplot(2, 1, 2)
 
-    plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap='jet')
+    plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap='magma')
 
     plt.ylabel('Frequency [Hz]')
+    plt.yscale('log')
     plt.xlabel('Time [sec]')
     plt.xlim(sound_start, sound_end)
     plt.ylim([min_freq, max_freq])
@@ -119,7 +119,7 @@ def doAnalysis(filename, sound_start, sound_end, min_freq, max_freq):
     if sound_end == None:
         sound_end = audio_length
 
-    samples = butter_bandpass(samples, 100, 1000, sample_rate, 5)
+    samples = butter_bandpass(samples, min_freq, max_freq, sample_rate, 5)
 
     frequencies, times, spectrogram = spectralAnalysis(samples, sample_rate)
     makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end, filename)
