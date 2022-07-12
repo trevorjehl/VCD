@@ -24,6 +24,7 @@ import sys
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
 from scipy import signal
+from scipy.signal import butter, sosfilt, sosfreqz
 import numpy as np
 # Modify default matplotlib behavior.
 plt.rcParams['figure.dpi'] = 100
@@ -55,6 +56,16 @@ def readFile(filename):
     return sample_rate, samples, floating_point, audio_length, time_array
 
 
+def butter_bandpass(samples, lowcut, highcut, fs, order=5):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    sos = butter(order, [low, high], analog=False, btype='band', output='sos')
+    y = sosfilt(sos, samples)
+    
+    return y
+
+
 def spectralAnalysis(samples, sample_rate):
     """
     After being passed in sample (amplitude information) and a sample rate (sample
@@ -63,6 +74,7 @@ def spectralAnalysis(samples, sample_rate):
     """
     print("Doing spectral analysis...")
     frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate)
+    # , nperseg = 2048)
     
     return frequencies, times, spectrogram
 
@@ -106,6 +118,8 @@ def doAnalysis(filename, sound_start, sound_end, min_freq, max_freq):
 
     if sound_end == None:
         sound_end = audio_length
+
+    samples = butter_bandpass(samples, 100, 1000, sample_rate, 5)
 
     frequencies, times, spectrogram = spectralAnalysis(samples, sample_rate)
     makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end, filename)
