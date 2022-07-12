@@ -99,12 +99,6 @@ def makeSpectrogram(S_db):
     fig, ax = plt.subplots(figsize=(10,5))
     img = librosa.display.specshow(S_db, x_axis='time', y_axis='log', ax=ax)
 
-    # plt.ylabel('Frequency [Hz]')
-    # plt.xlabel('Time [sec]')
-    # plt.xlim(sound_start, sound_end)
-    # plt.ylim([min_freq, max_freq])
-    # plt.show()
-
 
 def doAnalysis(filename, sound_start, sound_end, min_freq, max_freq):
     print("Analyzing file...")
