@@ -8,10 +8,11 @@ The main tool, stored in __spectrogram_func.py__ is designed to be used from the
 foo@bar:~$ python3 spectrogram_func.py filename.wav starting_time ending_time minimum_frequency maximum_frequency
 ```
 
-- **starting_time**: Starting time (float, in s) to graph (i.e. minimum x-axis value)
+- **filename.wav**: Filename or file path of wav file to be analyzed.
+- **starting_time**: Starting time (float, in s) to graph (i.e. minimum x-axis value).
 - **ending_time**: Ending time (float, in s) to graph (i.e. maximum x-axis value). If ending time == "None", the program will default to the audio file's duration.
-- **minimum_frequency**: Lowest frequency (int, Hz) to show on graph (i.e. minimum y-axis value)
-- **maximum_frequency**: Highest frequency (int, Hz) to show on graph (i.e. maximum y-axis value)
+- **minimum_frequency**: Lowest frequency (int, Hz) to show on graph (i.e. minimum y-axis value).
+- **maximum_frequency**: Highest frequency (int, Hz) to show on graph (i.e. maximum y-axis value).
 
 Both min & max frequency also apply butterworth bandpass filtering according to the passed in frequencies. Using the script as a collection of imported functions allows more granularity (i.e. choosing exactly what to graph, how to filter, etc.).
 

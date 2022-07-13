@@ -8,18 +8,8 @@ generates a spectrographic view of file.
 TODO:
     - implement audio playing feature
     - modify FFT implementation depending on granularity of selected timescale
-
-##########################################################################################
-To use the program, navigate to the relevant directory in terminal. Use syntax as follows:
-
->>> python3 spectrogram_func.py filename.wav starting_time ending_time minimum_frequency maximum_frequency
-
-    - starting_time = Starting time (in s) to graph (i.e. minimum x-axis value)
-    - ending_time = Ending time (in s) to graph (i.e. maximum x-axis value). If ending time == "None", 
-the program will default to the audio file's duration.
-    - minimum_frequency = Lowest frequency (Hz) to show on graph (i.e. minimum y-axis value)
-    - maximum_frequency = Highest frequency (Hz) to show on graph (i.e. maximum y-axis value)
 """
+
 import sys
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
@@ -33,15 +23,11 @@ plt.rcParams['figure.dpi'] = 100
 def readFile(filename):
     """
     Opens wav file, returns sample_rate, samples, floating_point, audio_length, time_array.
-    
-    Sample_rate = the sampling rate of the wav file
-    samples = the value of the sound at a sample
-    floating_point = converts the sound amplitude to a range from -1:1 for graphing convenience
-    audio_length = length of the audio file
-    time_array = array of time values for each second (converts file from sample rate in x-axis to time in s)
     """
     print("Reading file...")
 
+    # Sample_rate = the sampling rate of the wav file
+    # samples = the value of the sound at a sample
     sample_rate, samples = wavfile.read(filename)
 
     # If the passed in audio file is stereo, use
@@ -49,18 +35,33 @@ def readFile(filename):
     if len(np.shape(samples)) != 1:
         samples = samples[0: ,1]
 
+    # floating_point converts the sound amplitude to a range from -1:1 for graphing convenience
     floating_point = samples / max(samples)
+
+    # audio_length is the length of the audio file
     audio_length = samples.shape[0] / sample_rate
+
+    # time_array = array of time values for each sample (converts 
+    # file from sample number in x-axis to time [s])
     time_array = (np.arange(samples.shape[0]) / samples.shape[0]) * audio_length
 
     return sample_rate, samples, floating_point, audio_length, time_array
 
 
 def butter_bandpass(samples, lowcut, highcut, fs, order=5):
+    """
+    Given an opened wav file, implement butterworth band-pass
+    filtering according to the *lowcut* & *highcut* variables.
+    Returns filtered version of the passed in *samples* var.
+    """
+    # Calculate Nyquist frequency
     nyq = 0.5 * fs
+
     low = lowcut / nyq
     high = highcut / nyq
     sos = butter(order, [low, high], analog=False, btype='band', output='sos')
+
+    # Filter data along one dimension using cascaded second-order sections.
     y = sosfilt(sos, samples)
     
     return y
@@ -89,9 +90,13 @@ def makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end, filen
     limiting the x-axis using passed in parameters sound_start & sound_end.
     """
     print("Making amplitude graph...")
+
+    #Select the top plot.
     plt.subplot(2, 1, 1)
-    plt.ylabel('Amplitude')
+
+    # Plot & label amplitude data
     plt.plot(time_array, floating_point)
+    plt.ylabel('Amplitude')
     plt.xlim(sound_start, sound_end)
     plt.title(f'{filename} Sound Analysis')
 
@@ -103,9 +108,6 @@ def makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min
     parameters sound_start, sound_end, min_freq, and max_freq.
     """
     print("Making spectrogram...")
-    
-    # Tell matplot that the following code refers to the second plot.
-    plt.subplot(2, 1, 2)
 
     # Create spectrogram
     plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap='magma')
@@ -121,11 +123,14 @@ def makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min
 
 def doAnalysis(filename, sound_start, sound_end, min_freq, max_freq):
     """
-    Given a filename in the directory, the starting and ending 
+    *** For command line usage *** 
+
+    Given a file path, the starting and ending 
     times (in s) to graph of the sound file, and the minimum and maximum
     frequencies to graph, return a 
     """
     print("Analyzing file...")
+
     sample_rate, samples, floating_point, audio_length, time_array = readFile(filename)
 
     if sound_end == None:
