@@ -91,15 +91,21 @@ def makeAmplitudeGraph(time_array, samples, audio_startstop, filename):
     limiting the x-axis using passed in parameters sound_start & sound_end.
     """
     print("Making amplitude graph...")
+    downsample_factor = 10
 
-    # floating_point converts the sound amplitude to a range from -1:1 for graphing convenience
+    # floating_point converts the sound amplitude to 
+    # a range from -1:1 for graphing convenience
     floating_point_amplitudes = samples / max(samples)
 
-    #Select the top plot.
+    # downsample the signal amplitudes for graphing
+    downsampled_amps = signal.decimate(floating_point_amplitudes, downsample_factor)
+    downsampled_time = time_array[::downsample_factor]
+
+    # Select the top plot.
     plt.subplot(2, 1, 1)
 
     # Plot & label amplitude data
-    plt.plot(time_array, floating_point_amplitudes)
+    plt.plot(downsampled_time, downsampled_amps)
     plt.ylabel('Amplitude')
     plt.xlim(audio_startstop[0], audio_startstop[1])
     plt.title(f'{filename} Sound Analysis')
@@ -137,9 +143,6 @@ def doAnalysis(filename, audio_startstop, audio_freqs):
     print("Analyzing file...")
 
     sample_rate, samples, audio_length, time_array = readFile(filename, audio_startstop)
-
-    if audio_startstop[1] == None:
-        audio_startstop[1] = audio_length
 
     # Pass commands into butterworth band pass filter
     samples = butter_bandpass(samples, audio_freqs, sample_rate, 5)
