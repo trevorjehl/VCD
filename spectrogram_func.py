@@ -12,6 +12,7 @@ TODO:
 
 import sys
 import matplotlib.pyplot as plt
+# from more_itertools import sample
 from scipy.io import wavfile
 from scipy import signal
 from scipy.signal import butter, sosfilt
@@ -20,7 +21,7 @@ import numpy as np
 plt.rcParams['figure.dpi'] = 100
 
 
-def readFile(filename):
+def readFile(filename, audio_startstop):
     """
     Opens wav file, returns sample_rate, samples, floating_point, audio_length, time_array.
     """
@@ -35,30 +36,30 @@ def readFile(filename):
     if len(np.shape(samples)) != 1:
         samples = samples[0: ,1]
 
-    # floating_point converts the sound amplitude to a range from -1:1 for graphing convenience
-    floating_point = samples / max(samples)
-
     # audio_length is the length of the audio file
     audio_length = samples.shape[0] / sample_rate
+
+    # If an ending time is passed in, use that time; otherwise use the rest of the audio file
+    audio_startstop[1] = float(audio_startstop[1]) if str(audio_startstop[1]).isdigit() else audio_length
 
     # time_array = array of time values for each sample (converts 
     # file from sample number in x-axis to time [s])
     time_array = (np.arange(samples.shape[0]) / samples.shape[0]) * audio_length
 
-    return sample_rate, samples, floating_point, audio_length, time_array
+    return sample_rate, samples, audio_length, time_array
 
 
-def butter_bandpass(samples, lowcut, highcut, fs, order=5):
+def butter_bandpass(samples, audio_freqs, sample_rate, order=5):
     """
     Given an opened wav file, implement butterworth band-pass
     filtering according to the *lowcut* & *highcut* variables.
     Returns filtered version of the passed in *samples* var.
     """
     # Calculate Nyquist frequency
-    nyq = 0.5 * fs
+    nyq = 0.5 * sample_rate
 
-    low = lowcut / nyq
-    high = highcut / nyq
+    low = audio_freqs[0] / nyq
+    high = audio_freqs[1] / nyq
     sos = butter(order, [low, high], analog=False, btype='band', output='sos')
 
     # Filter data along one dimension using cascaded second-order sections.
@@ -84,24 +85,27 @@ def spectralAnalysis(samples, sample_rate):
     return frequencies, times, spectrogram
 
 
-def makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end, filename):
+def makeAmplitudeGraph(time_array, samples, audio_startstop, filename):
     """
     Using opened .wav file, plots the sound amplitude with respect to time,
     limiting the x-axis using passed in parameters sound_start & sound_end.
     """
     print("Making amplitude graph...")
 
+    # floating_point converts the sound amplitude to a range from -1:1 for graphing convenience
+    floating_point_amplitudes = samples / max(samples)
+
     #Select the top plot.
     plt.subplot(2, 1, 1)
 
     # Plot & label amplitude data
-    plt.plot(time_array, floating_point)
+    plt.plot(time_array, floating_point_amplitudes)
     plt.ylabel('Amplitude')
-    plt.xlim(sound_start, sound_end)
+    plt.xlim(audio_startstop[0], audio_startstop[1])
     plt.title(f'{filename} Sound Analysis')
 
 
-def makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min_freq, max_freq):
+def makeSpectrogram(times, frequencies, spectrogram, audio_startstop, audio_freqs):
     """
     After spectral analysis is performed, this function takes that 
     information and plots it, limiting the axes using passed in 
@@ -109,6 +113,7 @@ def makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min
     """
     print("Making spectrogram...")
 
+    plt.subplot(2,1,2)
     # Create spectrogram
     plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap='magma')
 
@@ -116,12 +121,12 @@ def makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min
     plt.ylabel('Frequency [Hz]')
     plt.yscale('log')
     plt.xlabel('Time [sec]')
-    plt.xlim(sound_start, sound_end)
-    plt.ylim([min_freq, max_freq])
+    plt.xlim(audio_startstop[0], audio_startstop[1])
+    plt.ylim(audio_freqs[0], audio_freqs[1])
     plt.show()
 
 
-def doAnalysis(filename, sound_start, sound_end, min_freq, max_freq):
+def doAnalysis(filename, audio_startstop, audio_freqs):
     """
     *** For command line usage *** 
 
@@ -131,21 +136,20 @@ def doAnalysis(filename, sound_start, sound_end, min_freq, max_freq):
     """
     print("Analyzing file...")
 
-    sample_rate, samples, floating_point, audio_length, time_array = readFile(filename)
+    sample_rate, samples, audio_length, time_array = readFile(filename, audio_startstop)
 
-    if sound_end == None:
-        sound_end = audio_length
+    if audio_startstop[1] == None:
+        audio_startstop[1] = audio_length
 
     # Pass commands into butterworth band pass filter
-    samples = butter_bandpass(samples, min_freq, max_freq, sample_rate, 5)
+    samples = butter_bandpass(samples, audio_freqs, sample_rate, 5)
 
     # Do spectral analysis on wav file
     frequencies, times, spectrogram = spectralAnalysis(samples, sample_rate)
 
     # Make graphs.
-    makeAmplitudeGraph(time_array, floating_point, sound_start, sound_end, filename)
-    makeSpectrogram(times, frequencies, spectrogram, sound_start, sound_end, min_freq, max_freq)
-    plt.show()
+    makeAmplitudeGraph(time_array, samples, audio_startstop, filename)
+    makeSpectrogram(times, frequencies, spectrogram, audio_startstop, audio_freqs)
     
 
 def main():
@@ -157,19 +161,15 @@ def main():
         raise Exception("Improper arguments. Must pass in 5 parameters: filename, sound_start, sound_end, min_freq, max_freq.")
     
     filename = args[0]
+
+    #
     sound_start = float(args[1])
-    
-    # Logic for using the entire sound file
-    if args[2] == "None":
-        sound_end = None
-    else:
-        sound_end = float(args[2])
+    audio_startstop = [sound_start, args[2]]
     
     # Frequencies can only be int values
-    min_freq = int(args[3])
-    max_freq = int(args[4])
+    audio_freqs = (int(args[3]), int(args[4]))
 
-    doAnalysis(filename, sound_start, sound_end, min_freq, max_freq)
+    doAnalysis(filename, audio_startstop, audio_freqs)
 
 
 if __name__ == '__main__':
