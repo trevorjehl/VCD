@@ -6,13 +6,13 @@ Spectrogram generation script for audio sample visualization. Takes in a mono wa
 generates a spectrographic view of file.
 
 TODO:
+    - implement resonance peaks analysis
     - implement audio playing feature
     - modify FFT implementation depending on granularity of selected timescale
 """
 
 import sys
 import matplotlib.pyplot as plt
-# from more_itertools import sample
 from scipy.io import wavfile
 from scipy import signal
 from scipy.signal import butter, sosfilt
@@ -23,7 +23,8 @@ plt.rcParams['figure.dpi'] = 100
 
 def readFile(filename, audio_startstop):
     """
-    Opens wav file, returns sample_rate, samples, floating_point, audio_length, time_array.
+    Using a file path, opens a wav file into an array.
+    Returns the raw audio information.
     """
     print("Reading file...")
 
@@ -38,15 +39,15 @@ def readFile(filename, audio_startstop):
 
     # audio_length is the length of the audio file
     audio_length = samples.shape[0] / sample_rate
-
+    
     # If an ending time is passed in, use that time; otherwise use the rest of the audio file
-    audio_startstop[1] = float(audio_startstop[1]) if str(audio_startstop[1]).isdigit() else audio_length
+    audio_startstop[1] = float(audio_startstop[1]) if not audio_startstop[1] == None else audio_length
 
     # time_array = array of time values for each sample (converts 
     # file from sample number in x-axis to time [s])
     time_array = (np.arange(samples.shape[0]) / samples.shape[0]) * audio_length
 
-    return sample_rate, samples, audio_length, time_array
+    return sample_rate, samples, audio_length, time_array, audio_startstop
 
 
 def butter_bandpass(samples, audio_freqs, sample_rate, order=5):
@@ -60,6 +61,8 @@ def butter_bandpass(samples, audio_freqs, sample_rate, order=5):
 
     low = audio_freqs[0] / nyq
     high = audio_freqs[1] / nyq
+
+    # Calculate second-order sections representation of the IIR butter filter.
     sos = butter(order, [low, high], analog=False, btype='band', output='sos')
 
     # Filter data along one dimension using cascaded second-order sections.
@@ -95,9 +98,9 @@ def makeAmplitudeGraph(time_array, samples, audio_startstop, filename):
 
     # floating_point converts the sound amplitude to 
     # a range from -1:1 for graphing convenience
-    floating_point_amplitudes = samples / max(samples)
+    floating_point_amplitudes = samples / max([num for num in samples])
 
-    # downsample the signal amplitudes for graphing
+    # downsample the signal amplitudes for graphing (and time values)
     downsampled_amps = signal.decimate(floating_point_amplitudes, downsample_factor)
     downsampled_time = time_array[::downsample_factor]
 
@@ -142,14 +145,14 @@ def doAnalysis(filename, audio_startstop, audio_freqs):
     """
     print("Analyzing file...")
 
-    sample_rate, samples, audio_length, time_array = readFile(filename, audio_startstop)
+    sample_rate, samples, audio_length, time_array, audio_startstop = readFile(filename, audio_startstop)
 
     # Pass commands into butterworth band pass filter
     samples = butter_bandpass(samples, audio_freqs, sample_rate, 5)
 
     # Do spectral analysis on wav file
     frequencies, times, spectrogram = spectralAnalysis(samples, sample_rate)
-
+    print(audio_startstop)
     # Make graphs.
     makeAmplitudeGraph(time_array, samples, audio_startstop, filename)
     makeSpectrogram(times, frequencies, spectrogram, audio_startstop, audio_freqs)
@@ -163,12 +166,10 @@ def main():
     if len(args) != 5:
         raise Exception("Improper arguments. Must pass in 5 parameters: filename, sound_start, sound_end, min_freq, max_freq.")
     
+    # Interpret command line args
     filename = args[0]
-
-    #
     sound_start = float(args[1])
     audio_startstop = [sound_start, args[2]]
-    
     # Frequencies can only be int values
     audio_freqs = (int(args[3]), int(args[4]))
 
