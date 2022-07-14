@@ -6,7 +6,7 @@ Spectrogram generation script for audio sample visualization. Takes in a mono wa
 generates a spectrographic view of file.
 
 TODO:
-    - implement resonance peaks analysis
+    - implement resonance peak analysis
     - implement audio playing feature
     - modify FFT implementation depending on granularity of selected timescale
 """
@@ -111,6 +111,11 @@ def makeAmplitudeGraph(time_array, samples, audio_startstop, filename):
     plt.plot(downsampled_time, downsampled_amps)
     plt.ylabel('Amplitude')
     plt.xlim(audio_startstop[0], audio_startstop[1])
+
+    # Title the graph using the file name,
+    # not the file path (if applicable)
+    filename = filename.split('/')
+    filename = filename[-1]
     plt.title(f'{filename} Sound Analysis')
 
 
