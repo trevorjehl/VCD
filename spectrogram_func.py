@@ -20,6 +20,8 @@ import numpy as np
 # Modify default matplotlib behavior.
 plt.rcParams['figure.dpi'] = 100
 
+N_SPECTRAL_PEAKS = 3
+N_BUTTER_PASS = 5
 
 def readFile(filename, audio_startstop):
     """
@@ -41,7 +43,10 @@ def readFile(filename, audio_startstop):
     audio_length = samples.shape[0] / sample_rate
     
     # If an ending time is passed in, use that time; otherwise use the rest of the audio file
-    audio_startstop[1] = float(audio_startstop[1]) if not audio_startstop[1] == None else audio_length
+    if not audio_startstop[1] == 'None':
+        audio_startstop[1] = float(audio_startstop[1])
+    else:
+        audio_startstop[1] = audio_length
 
     # time_array = array of time values for each sample (converts 
     # file from sample number in x-axis to time [s])
@@ -50,7 +55,7 @@ def readFile(filename, audio_startstop):
     return sample_rate, samples, audio_length, time_array, audio_startstop
 
 
-def butter_bandpass(samples, audio_freqs, sample_rate, order=5):
+def butter_bandpass(samples, audio_freqs, sample_rate, N_BUTTER_PASS):
     """
     Given an opened wav file, implement butterworth band-pass
     filtering according to the *lowcut* & *highcut* variables.
@@ -63,7 +68,7 @@ def butter_bandpass(samples, audio_freqs, sample_rate, order=5):
     high = audio_freqs[1] / nyq
 
     # Calculate second-order sections representation of the IIR butter filter.
-    sos = butter(order, [low, high], analog=False, btype='band', output='sos')
+    sos = butter(N_BUTTER_PASS, [low, high], analog=False, btype='band', output='sos')
 
     # Filter data along one dimension using cascaded second-order sections.
     y = sosfilt(sos, samples)
@@ -86,6 +91,34 @@ def spectralAnalysis(samples, sample_rate):
         window = 'hamming')
     
     return frequencies, times, spectrogram
+
+def findPeaksAtTime(spectrogram, frequencies):
+    """
+    Assuming a slice of spectrogram has been passed in
+    (i.e. spectrogram[:, iterable]), return the (x,y coordinates)
+    of the peaks of the slice.
+    """
+    # Find peaks using scipy peak finding algorythym
+    peaks = signal.find_peaks(spectrogram, prominence=1000)
+
+    # Remove the dict from peaks
+    peaks = peaks[0]
+
+    # Make the frequency intensity values a python list
+    spec_list = list(spectrogram)
+    
+    peak_coordinates = []
+
+    for peak in peaks:
+        x_val = frequencies[peak]
+        y_val = spec_list[peak]
+        
+        peak_coordinates.append((x_val, y_val))
+
+    sorted_coords = sorted(peak_coordinates, reverse = True, key=lambda coords: coords[1])
+    sorted_coords = sorted_coords[:N_SPECTRAL_PEAKS]
+
+    return sorted_coords
 
 
 def makeAmplitudeGraph(time_array, samples, audio_startstop, filename):
@@ -133,11 +166,24 @@ def makeSpectrogram(times, frequencies, spectrogram, audio_startstop, audio_freq
 
     # Stylize graphs
     plt.ylabel('Frequency [Hz]')
+    
     plt.yscale('log')
     plt.xlabel('Time [sec]')
     plt.xlim(audio_startstop[0], audio_startstop[1])
     plt.ylim(audio_freqs[0], audio_freqs[1])
-    plt.show()
+
+
+def graphSpectralPeaks(spectrogram, frequencies, audio_length):
+    plt.subplot(2,1,2)
+
+    for i in range(spectrogram.shape[1]):
+        working_spectrogram = spectrogram[:,i]
+        sorted_coords = findPeaksAtTime(working_spectrogram, frequencies)
+
+        y_coords = [tup[0] for tup in sorted_coords]
+        x_coords = [i * (audio_length / spectrogram.shape[1]) for x in range(len(y_coords))]
+
+        plt.plot(x_coords, y_coords, marker="o", markersize=3, markeredgecolor="green", markerfacecolor="green", linestyle='None',)
 
 
 def doAnalysis(filename, audio_startstop, audio_freqs):
@@ -153,14 +199,16 @@ def doAnalysis(filename, audio_startstop, audio_freqs):
     sample_rate, samples, audio_length, time_array, audio_startstop = readFile(filename, audio_startstop)
 
     # Pass commands into butterworth band pass filter
-    samples = butter_bandpass(samples, audio_freqs, sample_rate, 5)
+    samples = butter_bandpass(samples, audio_freqs, sample_rate, N_BUTTER_PASS)
 
     # Do spectral analysis on wav file
     frequencies, times, spectrogram = spectralAnalysis(samples, sample_rate)
-    print(audio_startstop)
+
     # Make graphs.
     makeAmplitudeGraph(time_array, samples, audio_startstop, filename)
     makeSpectrogram(times, frequencies, spectrogram, audio_startstop, audio_freqs)
+    graphSpectralPeaks(spectrogram, frequencies, audio_length)
+    plt.show()
     
 
 def main():
