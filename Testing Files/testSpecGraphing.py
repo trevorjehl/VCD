@@ -27,9 +27,9 @@ for i in range(spectrogram.shape[1]):
     y_coords = [tup[0] for tup in sorted_coords]
     x_coords = [i * (audio_length / spectrogram.shape[1]) for x in range(len(y_coords))]
 
-    print(x_coords[0])
     plt.plot(x_coords, y_coords, marker="o", markersize=3, markeredgecolor="green", markerfacecolor="green", linestyle='None',)
 
-print(audio_length)
+print(type(times))
+
 plt.ylim(audio_freqs[0], audio_freqs[1])
 plt.show()
