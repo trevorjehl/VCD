@@ -23,16 +23,16 @@ plt.rcParams['figure.dpi'] = 100
 N_SPECTRAL_PEAKS = 4
 # Order # of butterworth bandpass filter
 N_BUTTER_PASS = 5
+# Order of downsampling
+DOWNSAMPLE_FACTOR = 10
 
 def readFile(filename, audio_startstop):
     """
     Using a file path, opens a wav file into an array.
     Returns the raw audio information.
     """
-    print("Reading file...")
-
     # Sample_rate = the sampling rate of the wav file
-    # samples = the value of the sound at a sample
+    # samples = the displacement at a time
     sample_rate, samples = wavfile.read(filename)
 
     # If the passed in audio file is stereo, use
@@ -55,6 +55,19 @@ def readFile(filename, audio_startstop):
 
     return sample_rate, samples, audio_length, time_array, audio_startstop
 
+def downSample(x, y):
+    """
+    Given an arbitrary set of (x,y) coordinates, downsample
+    the given information while preserving the scale of the x-axis
+    information (e.x. time).
+    """
+    # Downsample the signal after applying an anti-aliasing filter.
+    downsampled_y = signal.decimate(y, DOWNSAMPLE_FACTOR)
+    # Downsample the x-axis by simply choosing every DOWNSAMPLE_FACTOR instance
+    downsampled_x = x[::DOWNSAMPLE_FACTOR]
+
+    return downsampled_x, downsampled_y
+
 
 def butterBandpass(samples, audio_freqs, sample_rate):
     """
@@ -65,6 +78,7 @@ def butterBandpass(samples, audio_freqs, sample_rate):
     # Calculate Nyquist frequency
     nyq = 0.5 * sample_rate
 
+    # Calculate low & high cuts with nyquist freq
     low = audio_freqs[0] / nyq
     high = audio_freqs[1] / nyq
 
@@ -77,14 +91,12 @@ def butterBandpass(samples, audio_freqs, sample_rate):
     return y
 
 
-def spectralAnalysis(samples, sample_rate):
+def spectralAnalysis(samples, sample_rate: int):
     """
     After being passed in sample (amplitude information) and a sample rate (sample
     frequecy), completes a FFT analysis passing the information from time domain to the
     frequency domain.
     """
-    print("Doing spectral analysis...")
-
     frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate, 
         nperseg = 4096,
         noverlap = 4096 // 4,
@@ -97,26 +109,25 @@ def spectralAnalysis(samples, sample_rate):
 def findPeaksAtTime(spectrogram, frequencies):
     """
     Assuming a slice of spectrogram has been passed in
-    (i.e. spectrogram[:, iterable]), return the (x,y coordinates)
-    of the peaks of the slice.
+    (i.e. spectrogram[:, iterable]), return the (x,y) coordinates
+    (x = frequency, y = intensity) of the peaks of the slice of time.
     """
     # Find peaks using scipy peak finding algorythym
+    # peak-finding sensitivity can be adjusted using the prominence value
     peaks = signal.find_peaks(spectrogram, prominence=1000)
 
-    # Remove the dict from peaks
+    # Remove the dict from peaks list
     peaks = peaks[0]
-
-    # Make the frequency intensity values a python list
-    spec_list = list(spectrogram)
     
     peak_coordinates = []
-
     for peak in peaks:
+        # Consider the xy coordinates in the frequency/intensity axes
         x_val = frequencies[peak]
-        y_val = spec_list[peak]
+        y_val = spectrogram[peak]
         
         peak_coordinates.append((x_val, y_val))
 
+    # Select only the *n* largest peaks to return
     sorted_coords = sorted(peak_coordinates, reverse = True, key=lambda coords: coords[1])
     sorted_coords = sorted_coords[:N_SPECTRAL_PEAKS]
 
@@ -128,20 +139,16 @@ def makeAmplitudeGraph(time_array, samples, audio_startstop, filename):
     Using opened .wav file, plots the sound amplitude with respect to time,
     limiting the x-axis using passed in parameters sound_start & sound_end.
     """
-    print("Making amplitude graph...")
-    downsample_factor = 10
 
     # floating_point converts the sound amplitude to 
     # a range from -1:1 for graphing convenience
     floating_point_amplitudes = samples / max([num for num in samples])
 
-    # downsample the signal amplitudes for graphing (and time values)
-    downsampled_amps = signal.decimate(floating_point_amplitudes, downsample_factor)
-    downsampled_time = time_array[::downsample_factor]
+    # Remove some of the amplitude data for graphing (easier to graph)
+    downsampled_time, downsampled_amps = downSample(time_array, floating_point_amplitudes)
 
     # Select the top plot.
     plt.subplot(2, 1, 1)
-
     # Plot & label amplitude data
     plt.plot(downsampled_time, downsampled_amps)
     plt.ylabel('Amplitude')
@@ -154,17 +161,15 @@ def makeAmplitudeGraph(time_array, samples, audio_startstop, filename):
     plt.title(f'{filename} Sound Analysis')
 
 
-def makeSpectrogram(times: np.ndarray, frequencies, spectrogram: np.ndarray, audio_startstop, audio_freqs):
+def makeSpectrogram(times: np.ndarray, frequencies, spectrogram: np.ndarray, audio_startstop: list, audio_freqs):
     """
     After spectral analysis is performed, this function takes that 
     information and plots it, limiting the axes using passed in 
     parameters sound_start, sound_end, min_freq, and max_freq.
     """
-    print("Making spectrogram...")
-
     plt.subplot(2,1,2)
     # Create spectrogram
-    plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap='magma')
+    plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap='magma', shading='auto')
 
     # Stylize graphs
     plt.ylabel('Frequency [Hz]')
@@ -176,19 +181,32 @@ def makeSpectrogram(times: np.ndarray, frequencies, spectrogram: np.ndarray, aud
 
 
 def graphSpectralPeaks(spectrogram: np.ndarray, frequencies: np.ndarray, audio_length: float):
+    """
+    Given the full spectrogram array, plot N_SPECTRAL_PEAKS points vertically
+    along each horizontal 'slice' of the spectrogram.
+    """
+    # Selet the second plot
     plt.subplot(2,1,2)
 
     for i in range(spectrogram.shape[1]):
+        # For each iteration, consider a vertical slice of the spectrogram
         working_spectrogram = spectrogram[:,i]
+        # For each slice, find the spectral peaks
         sorted_coords = findPeaksAtTime(working_spectrogram, frequencies)
 
+        # Convert the given xy axes (frequency/intensity) to the time/frequency axes (i.e. for spectrogram)
         y_coords = [tup[0] for tup in sorted_coords]
-        x_coords = [i * (audio_length / spectrogram.shape[1]) for x in range(len(y_coords))]
+        x_coords = [i * (audio_length / spectrogram.shape[1]) for _ in range(len(y_coords))]
 
-        plt.plot(x_coords, y_coords, marker="o", markersize=3, markeredgecolor="green", markerfacecolor="green", linestyle='None',)
+        plt.plot(x_coords, y_coords,
+            marker="o", 
+            markersize=3,
+            markeredgecolor="green",
+            markerfacecolor="green",
+            linestyle='None',)
 
 
-def doAnalysis(filename: str, audio_startstop: list, audio_freqs: tuple):
+def doAnalysis(filename: str, audio_startstop: list, audio_freqs: list):
     """
     *** For command line usage *** 
 
@@ -196,8 +214,6 @@ def doAnalysis(filename: str, audio_startstop: list, audio_freqs: tuple):
     times (in s) to graph of the sound file, and the minimum and maximum
     frequencies to graph, return a 
     """
-    print("Analyzing file...")
-
     sample_rate, samples, audio_length, time_array, audio_startstop = readFile(filename, audio_startstop)
 
     # Pass commands into butterworth band pass filter
@@ -213,7 +229,6 @@ def doAnalysis(filename: str, audio_startstop: list, audio_freqs: tuple):
     
 
 def main():
-    print('Main running.')
     args = sys.argv[1:]
 
     # If the user has provided insufficient command line arguments, raise error
@@ -225,7 +240,7 @@ def main():
     sound_start = float(args[1])
     audio_startstop = [sound_start, args[2]]
     # Frequencies can only be int values
-    audio_freqs = (int(args[3]), int(args[4]))
+    audio_freqs = [int(args[3]), int(args[4])]
 
     doAnalysis(filename, audio_startstop, audio_freqs)
     plt.show()

@@ -1,5 +1,5 @@
 import unittest
-from matplotlib.testing.decorators import image_comparison
+import numpy as np
 from spectrogram_func import *
 
 class testSpectrogram(unittest.TestCase):
@@ -15,6 +15,17 @@ class testSpectrogram(unittest.TestCase):
         # Test ability to read sound file length
         self.assertAlmostEqual(readFile('two_channel_test.wav', [0, None])[2], 10.6666667)
 
+
+    def test_downSample(self):
+        x = np.arange(1,30,1)
+        y = np.array([0,0,0,0,0,0,0,0,0,0,10,10,10,10,10,10,10,10,10,10,50,50,50,50,50,50,50,50,50,50])
+        downsampled_x, downsampled_y = downSample(x,y)
+        downsampled_y = [num for num in downsampled_y]
+        downsampled_x = [num for num in downsampled_x]
+
+        self.assertTrue(downsampled_y == [-0.5567635698632712, 2.9842633311385063, 32.106209846488376])
+        self.assertTrue(downsampled_x == [1, 11,21])
+    
     # def test_amplitude_graph(self):
     #     samples = np.array([0,1000,0,0,-500,0,1000,0,0,-500,0,1000,0,0,-500,0,1000,0,0,-500,0,1000,0,0,-500,0,1000,0,0,-500,])
     #     time_array = np.arange(0,len(samples) * 0.2, 0.2)
@@ -24,6 +35,7 @@ class testSpectrogram(unittest.TestCase):
     #     x_plot, yplot = plt.get_
     #     np.testing.assert_array_equal(yplot,)
     
+
     def test_find_peaks(self):
         filename = 'two_channel_test.wav'
         audio_startstop = [1, 1.1]
