@@ -1,3 +1,6 @@
+"""
+Unit tests for spectrogram_func.py.
+"""
 import unittest
 import numpy as np
 from spectrogram_func import *
@@ -25,15 +28,6 @@ class testSpectrogram(unittest.TestCase):
 
         self.assertTrue(downsampled_y == [-0.5567635698632712, 2.9842633311385063, 32.106209846488376])
         self.assertTrue(downsampled_x == [1, 11,21])
-    
-    # def test_amplitude_graph(self):
-    #     samples = np.array([0,1000,0,0,-500,0,1000,0,0,-500,0,1000,0,0,-500,0,1000,0,0,-500,0,1000,0,0,-500,0,1000,0,0,-500,])
-    #     time_array = np.arange(0,len(samples) * 0.2, 0.2)
-    #     audio_startstop = [0, len(samples) * 0.2]
-    #     filename = 'test_graph'
-    #     makeAmplitudeGraph(time_array, samples, audio_startstop, filename)
-    #     x_plot, yplot = plt.get_
-    #     np.testing.assert_array_equal(yplot,)
     
 
     def test_find_peaks(self):

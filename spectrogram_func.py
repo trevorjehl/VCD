@@ -169,7 +169,9 @@ def makeSpectrogram(times: np.ndarray, frequencies, spectrogram: np.ndarray, aud
     """
     plt.subplot(2,1,2)
     # Create spectrogram
-    plt.pcolormesh(times, frequencies, 10*np.log10(spectrogram), cmap='magma', shading='auto')
+    
+    spectrogram = 10*np.log10(spectrogram) #account for dB scaling
+    plt.pcolormesh(times, frequencies, spectrogram, cmap='magma', shading='auto')
 
     # Stylize graphs
     plt.ylabel('Frequency [Hz]')
