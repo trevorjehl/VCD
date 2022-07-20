@@ -4,9 +4,9 @@ from a force sensitive resistor, process the data, and output
 it so that it can be useful for spectrogram_func.py
 """
 import sys
-import matplotlib.pyplot as plt
 from scipy.ndimage.filters import uniform_filter1d
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Approximate sensor readings/s [in Hz]
 HZ = 11.705685618729097
@@ -70,16 +70,33 @@ def findRespiratoryPhase(diff, diff_time_vals):
     or where the y vals are <= 0 [expiration].
     """
     resp_phase = {'insp' : [], 'exp' : []}
+    resp_startstop =  {'insp' : [], 'exp' : []}
 
     for i, num in enumerate(diff):
         # print(f'i: {i}, num: {num}, time_val: {diff_time_vals[i]}')
         if num > 0:
+
+            if resp_phase['exp']:
+                end = resp_phase['exp'][-1]
+                start = resp_phase['exp'][0]
+                resp_startstop['exp'].append((start, end))
+                resp_phase['exp'] = []
+            
             x_val = diff_time_vals[i]
             resp_phase['insp'].append(x_val)
         
         if num < 0:
+
+            if resp_phase['insp']:
+                end = resp_phase['insp'][-1]
+                start = resp_phase['insp'][0]
+                resp_startstop['insp'].append((start, end))
+                resp_phase['insp'] = []
+    
             x_val = diff_time_vals[i]
             resp_phase['exp'].append(x_val)
+
+    print(resp_startstop)
 
     return resp_phase
 
@@ -89,15 +106,6 @@ def graphResp(vals, running, time_list, diff, diff_time_vals):
     Given all the calculated data, 
     graph and label the data.
     """
-    # time_list = []
-    # for i in range(len(vals)): 
-    #     time = i / HZ
-    #     time_list.append(time)
-
-
-    print(diff_time_vals)
-    print(diff)
-
     plt.plot(time_list, vals, label = 'Raw Data')
     plt.plot(time_list, running, label = f'Running Average (window size = {RUNNING_WINDOW_SIZE})')
     plt.plot(diff_time_vals, diff, 'r', label = 'Running Average Derivative')
