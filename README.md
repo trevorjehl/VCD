@@ -23,5 +23,3 @@ Both min & max frequency also apply butterworth bandpass filtering according to 
 - **librosa**: Implements spectral analysis through the the librosa spectral analysis package.
 - **specgram-test**: Uses the prebuilt matplotlib *specgram* function instead of calling plt.pcolormesh as in **main**.
 - **numpy-fft**: A mostly unchanged branch with the intent to implement spectral analysis manually through numpy. In the future, it may allow more granularity.
-
-## Overview of Code Functions
