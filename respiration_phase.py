@@ -15,6 +15,11 @@ RUNNING_WINDOW_SIZE = 15
 
 
 def readRespData(filename, startstop):
+    """
+    Given a file path & sample start and stop
+    times (in sample #), open the file and
+    return the breathing force data.
+    """
     vals = []
     with open(filename) as f:
         for line in f:
@@ -35,17 +40,51 @@ def runningMean(vals):
     return running
 
 
-def graphResp(vals, running):
+def calcDifferential(vals):
+    """
+    Given breathing vals, calculate the
+     nth order differential of the data.
+    """
+    diff = np.diff(vals, n = 1)
+    return diff
+
+
+def graphResp(vals, running, diff):
+    """
+    Given all the calculated data, 
+    graph and label the data.
+    """
     time_list = []
     for i in range(len(vals)): 
         time = i / HZ
         time_list.append(time)
 
-    plt.plot(time_list, vals)
-    plt.plot(time_list, running)
+    diff_time = time_list[1:]
 
-    plt.xlabel("Time [s]")
-    plt.ylabel("Force")
+    plt.plot(time_list, vals, label = 'Raw Data')
+    plt.plot(time_list, running, label = f'Running Average (window size = {RUNNING_WINDOW_SIZE})')
+    plt.plot(diff_time, diff, 'r', label = 'Running Average Derivative')
+
+    # Fill above & below differential data to signal
+    # different breathing phases.
+    plt.fill_between(
+        x = diff_time, 
+        y1 = diff, 
+        where = diff >= 0,
+        color = "g",
+        alpha = 0.2)
+    
+    plt.fill_between(
+        x = diff_time, 
+        y1 = diff, 
+        where = diff <= 0,
+        color = "b",
+        alpha = 0.2)
+
+    plt.title('Respiration Phase Analysis: Inspiration vs Expiration')
+    plt.xlabel('Time [s]')
+    # plt.ylabel('Force')
+    plt.legend()
 
 
 def main():
@@ -56,7 +95,8 @@ def main():
     vals = readRespData(filename, startstop)
     
     running = runningMean(vals)
-    graphResp(vals, running)
+    diff = calcDifferential(running)
+    graphResp(vals, running, diff)
     plt.show()
 
 
