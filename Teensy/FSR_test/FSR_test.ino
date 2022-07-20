@@ -16,5 +16,5 @@ void loop(void) {
  
   Serial.println(fsrReading);     // the raw analog reading
  
-  delay(75);
+  delay(100);
 } 

@@ -1,6 +1,5 @@
 """
-This function is used to develop the peak finding algorythim for a spectrogram.
-It evaluates the peak frequencies at a moment in time from a sample wav file.
+This function animates the peak finding algorithym across time.
 """
 
 import matplotlib.pyplot as plt

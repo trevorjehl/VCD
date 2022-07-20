@@ -33,7 +33,6 @@ class testSpectrogram(unittest.TestCase):
     def test_find_peaks(self):
         filename = 'two_channel_test.wav'
         audio_startstop = [1, 1.1]
-        audio_freqs = [100, 2000]
 
         sample_rate, samples, audio_length, time_array, audio_startstop = readFile(filename, audio_startstop)
 
@@ -51,4 +50,3 @@ class testSpectrogram(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

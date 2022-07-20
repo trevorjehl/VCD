@@ -2,8 +2,8 @@
 2022 Trevor Jehl, CNMC
 Date-Created: 07-11-2022
 
-Spectrogram generation script for audio sample visualization. Takes in a mono wav file,
-generates a spectrographic view of file.
+Spectrogram generation script for audio sample visualization & basic feature
+extraction. Takes in a mono wav file, generates a spectrographic view of file.
 
 TODO:
     - implement audio playing feature
@@ -94,13 +94,17 @@ def butterBandpass(samples, audio_freqs, sample_rate):
 def spectralAnalysis(samples, sample_rate: int):
     """
     After being passed in sample (amplitude information) and a sample rate (sample
-    frequecy), completes a FFT analysis passing the information from time domain to the
+    frequency), completes a FFT analysis passing the information from time domain to the
     frequency domain.
     """
+    # nperseg, noverlap, nfft can all be modified to change the spectrogram 
+    # (see scipy documentation)
+    nperseg_int = 4096
+
     frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate, 
-        nperseg = 4096,
-        noverlap = 4096 // 4,
-        nfft = 4096*1, 
+        nperseg = nperseg_int,
+        noverlap = nperseg_int // 4,
+        nfft = nperseg_int * 1, 
         window = 'hamming')
     
     return frequencies, times, spectrogram
@@ -210,11 +214,10 @@ def graphSpectralPeaks(spectrogram: np.ndarray, frequencies: np.ndarray, audio_l
 
 def doAnalysis(filename: str, audio_startstop: list, audio_freqs: list):
     """
-    *** For command line usage *** 
-
     Given a file path, the starting and ending 
     times (in s) to graph of the sound file, and the minimum and maximum
-    frequencies to graph, return a 
+    frequencies to graph, return a plot with audio amplitude & spectrogram
+    graphed.
     """
     sample_rate, samples, audio_length, time_array, audio_startstop = readFile(filename, audio_startstop)
 
@@ -229,6 +232,8 @@ def doAnalysis(filename: str, audio_startstop: list, audio_freqs: list):
     makeSpectrogram(times, frequencies, spectrogram, audio_startstop, audio_freqs)
     graphSpectralPeaks(spectrogram, frequencies, audio_length)
     
+    return plt
+    
 
 def main():
     args = sys.argv[1:]
@@ -236,6 +241,9 @@ def main():
     # If the user has provided insufficient command line arguments, raise error
     if len(args) != 5:
         raise Exception("Improper arguments. Must pass in 5 parameters: filename, sound_start, sound_end, min_freq, max_freq.")
+    # Filter the minimum passed-in frequency.
+    if int(args[3]) == 0:
+        raise Exception("Minimum frequency must be at least 1.")
     
     # Interpret command line args
     filename = args[0]
