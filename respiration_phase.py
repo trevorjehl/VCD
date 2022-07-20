@@ -26,7 +26,13 @@ def readRespData(filename, startstop):
             line = line.split(' ')
             data = int(line[-1])
             vals.append(data)
-    return vals[startstop[0] : startstop[1]]
+
+    time_list = []
+    for i in range(len(vals)): 
+        time = i / HZ
+        time_list.append(time)
+
+    return vals[startstop[0] : startstop[1]], time_list[startstop[0] : startstop[1]]
 
 
 def runningMean(vals):
@@ -40,42 +46,73 @@ def runningMean(vals):
     return running
 
 
-def calcDifferential(vals):
+def calcDifferential(vals, time_list):
     """
     Given breathing vals, calculate the
      nth order differential of the data.
     """
     diff = np.diff(vals, n = 1)
-    return diff
+
+    # New time array for differential
+    diff_time_vals = []
+    for i in range(1, len(vals)):
+        end = time_list[i]
+        start = time_list[i - 1]
+        diff_time_vals.append(np.mean(end - start) + start)
+
+    return diff, diff_time_vals
 
 
-def graphResp(vals, running, diff):
+def findRespiratoryPhase(diff, diff_time_vals):
+    """
+    Given the differential dataset, find the
+    x vals where the y vals are >= 0 [inspiration]
+    or where the y vals are <= 0 [expiration].
+    """
+    resp_phase = {'insp' : [], 'exp' : []}
+
+    for i, num in enumerate(diff):
+        # print(f'i: {i}, num: {num}, time_val: {diff_time_vals[i]}')
+        if num > 0:
+            x_val = diff_time_vals[i]
+            resp_phase['insp'].append(x_val)
+        
+        if num < 0:
+            x_val = diff_time_vals[i]
+            resp_phase['exp'].append(x_val)
+
+    return resp_phase
+
+
+def graphResp(vals, running, time_list, diff, diff_time_vals):
     """
     Given all the calculated data, 
     graph and label the data.
     """
-    time_list = []
-    for i in range(len(vals)): 
-        time = i / HZ
-        time_list.append(time)
+    # time_list = []
+    # for i in range(len(vals)): 
+    #     time = i / HZ
+    #     time_list.append(time)
 
-    diff_time = time_list[1:]
+
+    print(diff_time_vals)
+    print(diff)
 
     plt.plot(time_list, vals, label = 'Raw Data')
     plt.plot(time_list, running, label = f'Running Average (window size = {RUNNING_WINDOW_SIZE})')
-    plt.plot(diff_time, diff, 'r', label = 'Running Average Derivative')
+    plt.plot(diff_time_vals, diff, 'r', label = 'Running Average Derivative')
 
     # Fill above & below differential data to signal
     # different breathing phases.
     plt.fill_between(
-        x = diff_time, 
+        x = diff_time_vals, 
         y1 = diff, 
         where = diff >= 0,
         color = "g",
         alpha = 0.2)
     
     plt.fill_between(
-        x = diff_time, 
+        x = diff_time_vals, 
         y1 = diff, 
         where = diff <= 0,
         color = "b",
@@ -83,7 +120,6 @@ def graphResp(vals, running, diff):
 
     plt.title('Respiration Phase Analysis: Inspiration vs Expiration')
     plt.xlabel('Time [s]')
-    # plt.ylabel('Force')
     plt.legend()
 
 
@@ -91,12 +127,17 @@ def main():
     # Interpret command line args
     args = sys.argv[1:]
     filename = args[0]
-    startstop = (int(args[1]), int(args[2]))
-    vals = readRespData(filename, startstop)
+    if len(args) > 0:
+        startstop = (int(args[1]), int(args[2]))
+    
+    vals, time_list= readRespData(filename, startstop)
     
     running = runningMean(vals)
-    diff = calcDifferential(running)
-    graphResp(vals, running, diff)
+    diff, diff_time_vals = calcDifferential(running, time_list)
+
+    findRespiratoryPhase(diff, diff_time_vals)
+
+    graphResp(vals, running, time_list, diff, diff_time_vals)
     plt.show()
 
 
