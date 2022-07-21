@@ -70,33 +70,25 @@ def findRespiratoryPhase(diff, diff_time_vals):
     or where the y vals are <= 0 [expiration].
     """
     resp_phase = {'insp' : [], 'exp' : []}
+
     resp_startstop =  {'insp' : [], 'exp' : []}
 
     for i, num in enumerate(diff):
         # print(f'i: {i}, num: {num}, time_val: {diff_time_vals[i]}')
+        x_val = diff_time_vals[i]
+        
         if num > 0:
-
-            if resp_phase['exp']:
-                end = resp_phase['exp'][-1]
-                start = resp_phase['exp'][0]
-                resp_startstop['exp'].append((start, end))
-                resp_phase['exp'] = []
-            
-            x_val = diff_time_vals[i]
             resp_phase['insp'].append(x_val)
         
         if num < 0:
-
-            if resp_phase['insp']:
-                end = resp_phase['insp'][-1]
-                start = resp_phase['insp'][0]
-                resp_startstop['insp'].append((start, end))
-                resp_phase['insp'] = []
-    
-            x_val = diff_time_vals[i]
             resp_phase['exp'].append(x_val)
-
-    print(resp_startstop)
+    print(resp_phase)
+    prev_time = None
+    
+    for num in resp_phase['insp']:
+        list_index_of_time = diff_time_vals.index(num)
+        y_value = diff[list_index_of_time]
+        start_time = 
 
     return resp_phase
 
@@ -108,7 +100,7 @@ def graphResp(vals, running, time_list, diff, diff_time_vals):
     """
     plt.plot(time_list, vals, label = 'Raw Data')
     plt.plot(time_list, running, label = f'Running Average (window size = {RUNNING_WINDOW_SIZE})')
-    plt.plot(diff_time_vals, diff, 'r', label = 'Running Average Derivative')
+    plt.plot(diff_time_vals, diff, 'r', label = 'Breath Phase')
 
     # Fill above & below differential data to signal
     # different breathing phases.
