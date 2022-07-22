@@ -31,9 +31,9 @@ def readRespData(filename, startstop):
     for i in range(len(vals)): 
         time = i / HZ
         time_list.append(time)
-
-    return vals[startstop[0] : startstop[1]], time_list[startstop[0] : startstop[1]]
-
+    
+    # return vals[startstop[0] : startstop[1]], time_list[startstop[0] : startstop[1]]
+    return vals, time_list
 
 def runningMean(vals):
     """
@@ -42,18 +42,20 @@ def runningMean(vals):
     Return a list of vals of the same dimension as the
     passed-in list.
     """
-    running = uniform_filter1d(vals, size = RUNNING_WINDOW_SIZE)
-    return running
+    return uniform_filter1d(vals, size = RUNNING_WINDOW_SIZE)
 
 
 def calcDifferential(vals, time_list):
     """
     Given breathing vals, calculate the
-     nth order differential of the data.
+    nth order differential of the data.
     """
+    # Calculate the nth order discrete differential of
+    # respiration force data
     diff = np.diff(vals, n = 1)
 
-    # New time array for differential
+    # New time array for discrete differential array -- taking
+    # differential reduces size of array, new x vals are needed
     diff_time_vals = []
     for i in range(1, len(vals)):
         end = time_list[i]
@@ -67,60 +69,116 @@ def findRespiratoryPhase(diff, diff_time_vals):
     """
     Given the differential dataset, find the
     x vals where the y vals are >= 0 [inspiration]
-    or where the y vals are <= 0 [expiration].
+    or where the y vals are <= 0 [expiration], return
+    a dictionary with a list of tuples that represent
+    the start and end of each phase of respiration.
     """
     resp_phase = {'insp' : [], 'exp' : []}
-
     resp_startstop =  {'insp' : [], 'exp' : []}
 
+    # This for loop finds all the points where the 'diff' data
+    #  is above/below the y-axis (inspiration/expiration respectively)
     for i, num in enumerate(diff):
-        # print(f'i: {i}, num: {num}, time_val: {diff_time_vals[i]}')
-        x_val = diff_time_vals[i]
-        
         if num > 0:
+
+            if resp_phase['exp']:
+                end = resp_phase['exp'][-1]
+                start = resp_phase['exp'][0]
+                resp_startstop['exp'].append((start, end))
+                resp_phase['exp'] = []
+            
+            x_val = diff_time_vals[i]
             resp_phase['insp'].append(x_val)
         
         if num < 0:
-            resp_phase['exp'].append(x_val)
-    print(resp_phase)
-    prev_time = None
+
+            if resp_phase['insp']:
+                end = resp_phase['insp'][-1]
+                start = resp_phase['insp'][0]
+                resp_startstop['insp'].append((start, end))
+                resp_phase['insp'] = []
     
-    for num in resp_phase['insp']:
-        list_index_of_time = diff_time_vals.index(num)
-        y_value = diff[list_index_of_time]
-        start_time = 
+            x_val = diff_time_vals[i]
+            resp_phase['exp'].append(x_val)
 
-    return resp_phase
+    # Checks to make sure that inspiration/expiration
+    # at the end of the file is still recorded.
+    if resp_phase['exp']:
+                end = resp_phase['exp'][-1]
+                start = resp_phase['exp'][0]
+                resp_startstop['exp'].append((start, end))
+                resp_phase['exp'] = []
 
+    if resp_phase['insp']:
+                end = resp_phase['insp'][-1]
+                start = resp_phase['insp'][0]
+                resp_startstop['insp'].append((start, end))
+                resp_phase['insp'] = []
 
-def graphResp(vals, running, time_list, diff, diff_time_vals):
+    # *** Optional code for graphing vertical lines at the
+    # start and end of each respiration phase ***
+    # for lst in resp_startstop.values():
+    #     for tup in lst:
+    #         for val in tup:
+    #             plt.axvline(x = val, color = 'b')
+    
+    return resp_startstop
+
+def indexOfClosest(lst, K):
+    closest =  lst[min(range(len(lst)), key = lambda i: abs(lst[i]-K))]
+    return lst.index(closest)
+
+def graphResp(vals, running, time_list, diff, diff_time_vals, startstop):
     """
     Given all the calculated data, 
     graph and label the data.
     """
-    plt.plot(time_list, vals, label = 'Raw Data')
-    plt.plot(time_list, running, label = f'Running Average (window size = {RUNNING_WINDOW_SIZE})')
-    plt.plot(diff_time_vals, diff, 'r', label = 'Breath Phase')
+    # Plot raw & calculated data
+    data_start = indexOfClosest(time_list, startstop[0])
+    data_end = indexOfClosest(time_list, startstop[1])
+
+    plt.plot(time_list[data_start : data_end],
+            vals[data_start : data_end],
+            label = 'Raw Sensor Data')
+    plt.plot(time_list[data_start : data_end], 
+            running[data_start : data_end],
+            label = f'Running Average (window size = {RUNNING_WINDOW_SIZE})')
+    plt.plot(diff_time_vals[data_start : data_end],
+            diff[data_start : data_end],
+            'r', label = 'Breath Phase')
 
     # Fill above & below differential data to signal
     # different breathing phases.
     plt.fill_between(
-        x = diff_time_vals, 
-        y1 = diff, 
-        where = diff >= 0,
+        x = diff_time_vals[data_start : data_end], 
+        y1 = diff[data_start : data_end], 
+        where = diff[data_start : data_end] >= 0,
         color = "g",
         alpha = 0.2)
     
     plt.fill_between(
-        x = diff_time_vals, 
-        y1 = diff, 
-        where = diff <= 0,
+        x = diff_time_vals[data_start : data_end], 
+        y1 = diff[data_start : data_end],
+        where = diff[data_start : data_end] <= 0,
         color = "b",
         alpha = 0.2)
 
+    # Chart design
     plt.title('Respiration Phase Analysis: Inspiration vs Expiration')
     plt.xlabel('Time [s]')
+    # plt.xlim((3, 30))
     plt.legend()
+
+
+def doRespAnalysis(filename, startstop):
+    vals, time_list= readRespData(filename, startstop)
+        
+    running = runningMean(vals)
+    diff, diff_time_vals = calcDifferential(running, time_list)
+
+    resp_startstop = findRespiratoryPhase(diff, diff_time_vals)
+
+    graphResp(vals, running, time_list, diff, diff_time_vals, startstop)
 
 
 def main():
@@ -130,14 +188,7 @@ def main():
     if len(args) > 0:
         startstop = (int(args[1]), int(args[2]))
     
-    vals, time_list= readRespData(filename, startstop)
-    
-    running = runningMean(vals)
-    diff, diff_time_vals = calcDifferential(running, time_list)
-
-    findRespiratoryPhase(diff, diff_time_vals)
-
-    graphResp(vals, running, time_list, diff, diff_time_vals)
+    doRespAnalysis(filename, startstop)
     plt.show()
 
 
