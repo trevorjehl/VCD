@@ -84,7 +84,7 @@ def findRespiratoryPhase(diff, diff_time_vals):
             if resp_phase['exp']:
                 end = resp_phase['exp'][-1]
                 start = resp_phase['exp'][0]
-                resp_startstop['exp'].append((start, end))
+                resp_startstop['exp'].append([start, end])
                 resp_phase['exp'] = []
             
             x_val = diff_time_vals[i]
@@ -95,7 +95,7 @@ def findRespiratoryPhase(diff, diff_time_vals):
             if resp_phase['insp']:
                 end = resp_phase['insp'][-1]
                 start = resp_phase['insp'][0]
-                resp_startstop['insp'].append((start, end))
+                resp_startstop['insp'].append([start, end])
                 resp_phase['insp'] = []
     
             x_val = diff_time_vals[i]
@@ -106,14 +106,20 @@ def findRespiratoryPhase(diff, diff_time_vals):
     if resp_phase['exp']:
                 end = resp_phase['exp'][-1]
                 start = resp_phase['exp'][0]
-                resp_startstop['exp'].append((start, end))
+                resp_startstop['exp'].append([start, end])
                 resp_phase['exp'] = []
 
     if resp_phase['insp']:
                 end = resp_phase['insp'][-1]
                 start = resp_phase['insp'][0]
-                resp_startstop['insp'].append((start, end))
+                resp_startstop['insp'].append([start, end])
                 resp_phase['insp'] = []
+    
+    # Without the following code, the system identifies the first
+    # value above/below zero. The following code pushes the index
+    # of the start and end to the left/right respectively
+    for key, lst in resp_startstop.items():
+        resp_startstop[key] = [(diff_time_vals[diff_time_vals.index(tuple[0]) - 1], diff_time_vals[diff_time_vals.index(tuple[1]) + 1]) for tuple in lst ]
 
     # *** Optional code for graphing vertical lines at the
     # start and end of each respiration phase ***
@@ -121,12 +127,14 @@ def findRespiratoryPhase(diff, diff_time_vals):
     #     for tup in lst:
     #         for val in tup:
     #             plt.axvline(x = val, color = 'b')
-    
+    print(resp_startstop)
     return resp_startstop
+
 
 def indexOfClosest(lst, K):
     closest =  lst[min(range(len(lst)), key = lambda i: abs(lst[i]-K))]
     return lst.index(closest)
+
 
 def graphResp(vals, running, time_list, diff, diff_time_vals, startstop):
     """
