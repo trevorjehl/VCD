@@ -1,23 +1,23 @@
 /*
   SD card datalogger
- 
- This example shows how to log data from three analog sensors
- to an SD card using the SD library.
- 	
- The circuit:
- * analog sensors on analog ins 0, 1, and 2
- * SD card attached to SPI bus as follows:
+
+  This example shows how to log data from three analog sensors
+  to an SD card using the SD library.
+
+  The circuit:
+   analog sensors on analog ins 0, 1, and 2
+   SD card attached to SPI bus as follows:
  ** MOSI - pin 11, pin 7 on Teensy with audio board
  ** MISO - pin 12
  ** CLK - pin 13, pin 14 on Teensy with audio board
  ** CS - pin 4,  pin 10 on Teensy with audio board
- 
- created  24 Nov 2010
- modified 9 Apr 2012
- by Tom Igoe
- 
- This example code is in the public domain.
- */
+
+  created  24 Nov 2010
+  modified 9 Apr 2012
+  by Tom Igoe
+
+  This example code is in the public domain.
+*/
 
 #include <SD.h>
 #include <SPI.h>
@@ -53,6 +53,8 @@ void setup()
 
   Serial.print("Initializing SD card...");
 
+  
+  
   // see if the card is present and can be initialized:
   if (!SD.begin(chipSelect)) {
     Serial.println("Card failed, or not present");
@@ -60,7 +62,15 @@ void setup()
       // No SD card, so don't do anything more - stay stuck here
     }
   }
+
+  // Delete the old datalog.
+  if (!SD.remove("datalog.txt")) {
+    Serial.println("Failed to delete file.");
+    delay(100);
+  }
+  
   Serial.println("card initialized.");
+  
 }
 
 void loop()

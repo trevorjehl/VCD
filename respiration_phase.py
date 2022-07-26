@@ -118,8 +118,8 @@ def findRespiratoryPhase(diff, diff_time_vals):
     # Without the following code, the system identifies the first
     # value above/below zero. The following code pushes the index
     # of the start and end to the left/right respectively
-    for key, lst in resp_startstop.items():
-        resp_startstop[key] = [(diff_time_vals[diff_time_vals.index(tuple[0]) - 1], diff_time_vals[diff_time_vals.index(tuple[1]) + 1]) for tuple in lst ]
+    # for key, lst in resp_startstop.items():
+    #     resp_startstop[key] = [(diff_time_vals[diff_time_vals.index(tuple[0]) - 1], diff_time_vals[diff_time_vals.index(tuple[1]) + 1]) for tuple in lst ]
 
     # *** Optional code for graphing vertical lines at the
     # start and end of each respiration phase ***
@@ -134,6 +134,15 @@ def findRespiratoryPhase(diff, diff_time_vals):
 def indexOfClosest(lst, K):
     closest =  lst[min(range(len(lst)), key = lambda i: abs(lst[i]-K))]
     return lst.index(closest)
+
+
+def calcBreathStats(resp_startstop):
+    """
+    Given the dictionary containing the start & stop
+    of each phase of the breathing cycle, extract the 
+    duration of 
+    """
+
 
 
 def graphResp(vals, running, time_list, diff, diff_time_vals, startstop):
