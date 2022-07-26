@@ -1,45 +1,21 @@
 /*
-  SD card datalogger
-
-  This example shows how to log data from three analog sensors
-  to an SD card using the SD library.
+  FSR Datalogger
 
   The circuit:
-   analog sensors on analog ins 0, 1, and 2
-   SD card attached to SPI bus as follows:
- ** MOSI - pin 11, pin 7 on Teensy with audio board
- ** MISO - pin 12
- ** CLK - pin 13, pin 14 on Teensy with audio board
- ** CS - pin 4,  pin 10 on Teensy with audio board
+  FSR voltage dividor w/ potentiometer.
 
-  created  24 Nov 2010
-  modified 9 Apr 2012
-  by Tom Igoe
-
-  This example code is in the public domain.
+  Created 26 Jul 2022
+  by Trevor Jehl
 */
 
 #include <SD.h>
 #include <SPI.h>
+#include <TimeLib.h>
 
-// On the Ethernet Shield, CS is pin 4. Note that even if it's not
-// used as the CS pin, the hardware CS pin (10 on most Arduino boards,
-// 53 on the Mega) must be left as an output or the SD library
-// functions will not work.
-
-// change this to match your SD shield or module;
-// Arduino Ethernet shield: pin 4
-// Adafruit SD shields and modules: pin 10
-// Sparkfun SD shield: pin 8
-// Teensy audio board: pin 10
-// Teensy 3.5 & 3.6 & 4.1 on-board: BUILTIN_SDCARD
-// Wiz820+SD board: pin 4
-// Teensy 2.0: pin 0
-// Teensy++ 2.0: pin 20
 const int chipSelect = BUILTIN_SDCARD;
 
-void setup()
-{
+void setup() {
+
   //UNCOMMENT THESE TWO LINES FOR TEENSY AUDIO BOARD:
   SPI.setMOSI(7);  // Audio shield has MOSI on pin 7
   SPI.setSCK(14);  // Audio shield has SCK on pin 14
@@ -50,11 +26,7 @@ void setup()
     ; // wait for serial port to connect.
   }
 
-
   Serial.print("Initializing SD card...");
-
-  
-  
   // see if the card is present and can be initialized:
   if (!SD.begin(chipSelect)) {
     Serial.println("Card failed, or not present");
@@ -64,40 +36,56 @@ void setup()
   }
 
   // Delete the old datalog.
-  if (!SD.remove("datalog.txt")) {
+  while (!SD.remove("datalog.txt")) {
     Serial.println("Failed to delete file.");
     delay(100);
   }
-  
-  Serial.println("card initialized.");
-  
+
+  Serial.println("Card initialized.");
 }
 
-void loop()
-{
-  // make a string for assembling the data to log:
-  String dataString = "";
 
+String readFSR() {
   // read three sensors and append to the string:
-  int analogPin = A3;
-  int sensor = analogRead(analogPin);
-  dataString += String(sensor);
-  if (analogPin < 2) {
-    dataString += ",";
-  }
+  int FSRPin = A3;
+  int sensor = analogRead(FSRPin);
+  // Return the string of the sensor reading for
+  // datalog writing convenience
+  return String(sensor);
+}
 
-  // open the file.
+
+void writeDataSD(String dataString) {
+  // open the file
   File dataFile = SD.open("datalog.txt", FILE_WRITE);
-
+//  Serial.print(hour() + minute() + second() + ";");
   // if the file is available, write to it:
   if (dataFile) {
     dataFile.println(dataString);
     dataFile.close();
     // print to the serial port too:
     Serial.println(dataString);
-  } else {
-    // if the file isn't open, pop up an error:
-    Serial.println("error opening datalog.txt");
   }
-  delay(100); // run at a reasonable not-too-fast speed
+
+  else {
+    // if the file isn't open, pop up an error:
+    Serial.println("Error opening datalog.txt");
+  }
+
+}
+
+
+void loop() {
+  //  Serial.println(hour());
+  // make a string for assembling the data to log:
+  String dataString = "";
+
+  // Read the value of the FSR, add it to data to be logged
+  String FSR_Reading = readFSR();
+  dataString += String(FSR_Reading);
+
+  // Write dataString to a new line in txt file
+  writeDataSD(dataString);
+
+  delay(20); // run at a reasonable not-too-fast speed
 }
