@@ -7,11 +7,11 @@ Make sure to remove plt.show() as needed.
 """
 
 import time
-from spectrogram_func import *
+from sound_analysis import *
 
 filenames = ['/Users/trevorj/Documents/GitHub/VCD/Test Audio/two_channel_test.wav', 
             '/Users/trevorj/Downloads/long_wav.wav']
-            
+
 num_iterations = 10
 time_taken = {}
 mean_time_taken = {}

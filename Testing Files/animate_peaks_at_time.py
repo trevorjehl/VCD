@@ -3,7 +3,7 @@ This function animates the peak finding algorithym across time.
 """
 
 import matplotlib.pyplot as plt
-from spectrogram_func import *
+from sound_analysis import *
 from scipy import signal
 import matplotlib.animation as animation
 import numpy as np

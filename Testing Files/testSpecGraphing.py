@@ -1,6 +1,6 @@
 from email.mime import audio
 import matplotlib.pyplot as plt
-from spectrogram_func import *
+from sound_analysis import *
 from scipy import signal
 import numpy as np
 

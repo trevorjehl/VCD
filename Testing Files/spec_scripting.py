@@ -1,6 +1,6 @@
 from numpy import floating
 import matplotlib.pyplot as plt
-from spectrogram_func import *
+from sound_analysis import *
 import time
 
 audio_startstop = [0, 0.1]

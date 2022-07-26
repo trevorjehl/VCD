@@ -3,7 +3,7 @@ Trevor Jehl, CNMC 2022
 FSR simple testing sketch 
 */
  
-int fsrPin = A4;     // the FSR and 10K pulldown are connected to A4
+int fsrPin = A3;     // the FSR and 10K pulldown are connected to A4
 int fsrReading;     // the analog reading from the FSR resistor divider
  
 void setup(void) {

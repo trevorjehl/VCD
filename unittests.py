@@ -3,7 +3,7 @@ Unit tests for spectrogram_func.py.
 """
 import unittest
 import numpy as np
-from spectrogram_func import *
+from sound_analysis import *
 
 class testSpectrogram(unittest.TestCase):
 
