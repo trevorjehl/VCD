@@ -14,18 +14,7 @@
 
 const int chipSelect = BUILTIN_SDCARD;
 
-void setup() {
-
-  //UNCOMMENT THESE TWO LINES FOR TEENSY AUDIO BOARD:
-  SPI.setMOSI(7);  // Audio shield has MOSI on pin 7
-  SPI.setSCK(14);  // Audio shield has SCK on pin 14
-
-  // Open serial communications and wait for port to open:
-  Serial.begin(9600);
-  while (!Serial) {
-    ; // wait for serial port to connect.
-  }
-
+void initializeCard() {
   Serial.print("Initializing SD card...");
   // see if the card is present and can be initialized:
   if (!SD.begin(chipSelect)) {
@@ -44,11 +33,26 @@ void setup() {
   Serial.println("Card initialized.");
 }
 
+void setup() {
+  //UNCOMMENT THESE TWO LINES FOR TEENSY AUDIO BOARD:
+  SPI.setMOSI(7);  // Audio shield has MOSI on pin 7
+  SPI.setSCK(14);  // Audio shield has SCK on pin 14
+
+  // Open serial communications and wait for port to open:
+  Serial.begin(9600);
+  while (!Serial) {
+    ; // wait for serial port to connect.
+  }
+  // Initialize SD card.
+  initializeCard();
+}
+
 
 String readFSR() {
   // read three sensors and append to the string:
   int FSRPin = A3;
   int sensor = analogRead(FSRPin);
+  
   // Return the string of the sensor reading for
   // datalog writing convenience
   return String(sensor);
@@ -58,7 +62,7 @@ String readFSR() {
 void writeDataSD(String dataString) {
   // open the file
   File dataFile = SD.open("datalog.txt", FILE_WRITE);
-//  Serial.print(hour() + minute() + second() + ";");
+  
   // if the file is available, write to it:
   if (dataFile) {
     dataFile.println(dataString);
@@ -66,7 +70,6 @@ void writeDataSD(String dataString) {
     // print to the serial port too:
     Serial.println(dataString);
   }
-
   else {
     // if the file isn't open, pop up an error:
     Serial.println("Error opening datalog.txt");
