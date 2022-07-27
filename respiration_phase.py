@@ -2,6 +2,7 @@
 This file is designed to take in data about respiration phase
 from a force sensitive resistor, process the data, and output 
 it so that it can be useful for spectrogram_func.py
+
 Created Jul 2022
 by Trevor Jehl
 """
@@ -34,27 +35,34 @@ def readRespData(filename, startstop):
     vals = []
     millis = []
     
+    # Read FSR data into vals list
     with open(filename) as f:
         for line in f:
             line = line.split(' ')
             data = int(line[-1])
             vals.append(data)
     
+    # If millis info is in the .txt file,
+    # read the info and calculate samples/s (Hz)
     with open(filename) as f:
         for line in f:
-            print(line)
-            time = float(line.split(';')[0])
-            millis.append(time)
-            if len(millis) == 2:
+            lst = line.split(';')
+            if len(lst) > 1:
+                time = float(lst[0])
+                millis.append(time)
+            else:
+                Hz = 11.7
                 break
-    Hz = calcHz(millis)
-
+            if len(millis) == 2:
+                Hz = calcHz(millis)
+                break
+    
+    # Calculate real time elapsed according to Hz
     time_list = []
     for i in range(len(vals)): 
         time = i / Hz
         time_list.append(time)
     
-    # return vals[startstop[0] : startstop[1]], time_list[startstop[0] : startstop[1]]
     return vals, time_list
 
 
@@ -91,12 +99,17 @@ def calcDifferential(vals, time_list):
 def findRespiratoryPhase(diff, diff_time_vals):
     """
     Given the differential dataset, find the
-    x vals where the y vals are >= 0 [inspiration]
-    or where the y vals are <= 0 [expiration], return
+    x vals where the y vals are > 0 [inspiration]
+    or where the y vals are < 0 [expiration], return
     a dictionary with a list of tuples that represent
     the start and end of each phase of respiration.
     """
+    # A dictionary where all 'insp' data has y>0, 'exp'
+    # has y<0
     resp_phase = {'insp' : [], 'exp' : []}
+
+    # Each 'insp' & 'exp' list contains tuples with the start
+    # and end time (in seconds) of each respiration phase
     resp_startstop =  {'insp' : [], 'exp' : []}
 
     # This for loop finds all the points where the 'diff' data
@@ -141,23 +154,27 @@ def findRespiratoryPhase(diff, diff_time_vals):
     # Without the following code, the system identifies the first
     # value above/below zero. The following code pushes the index
     # of the start and end to the left/right respectively
-    
-    # for key, lst in resp_startstop.items():
-    #     resp_startstop[key] = [(diff_time_vals[diff_time_vals.index(tuple[0]) - 1], diff_time_vals[diff_time_vals.index(tuple[1]) + 1]) for tuple in lst ]
+    for key, lst in resp_startstop.items():
+        resp_startstop[key] = [(diff_time_vals[diff_time_vals.index(tuple[0]) - 1], diff_time_vals[diff_time_vals.index(tuple[1]) + 1]) for tuple in lst ]
 
     # *** Optional code for graphing vertical lines at the
-    # start and end of each respiration phase ***
+    # start and end of each respiration phase (usful for visually
+    #  checking that the code works) ***
     # for lst in resp_startstop.values():
     #     for tup in lst:
     #         for val in tup:
+    #             plt.subplot(2,1,1)
     #             plt.axvline(x = val, color = 'b')
 
-    # print(resp_startstop)
     return resp_startstop
 
 
-def indexOfClosest(lst, K):
-    closest =  lst[min(range(len(lst)), key = lambda i: abs(lst[i]-K))]
+def indexOfClosest(lst: list, num: float):
+    """
+    Given lst and any number num, returns the index of the number in lst
+    that is closest to K.
+    """
+    closest =  lst[min(range(len(lst)), key = lambda i: abs(lst[i] - num))]
     return lst.index(closest)
 
 
@@ -170,24 +187,22 @@ def graphResp(vals, running, time_list, diff, diff_time_vals, startstop):
     data_end = indexOfClosest(time_list, startstop[1])
 
     plt.subplot(2, 1, 1)
-
+    # Graph raw data
     plt.plot(time_list[data_start : data_end],
             vals[data_start : data_end],
             label = 'Raw Sensor Data')
+    # Graph moving avg data
     plt.plot(time_list[data_start : data_end], 
             running[data_start : data_end],
             label = f'Running Average (window size = {RUNNING_WINDOW_SIZE})')
-   
-    # Top plot styling
-    plt.legend()
-    plt.title('Respiration Phase Analysis')
     
+    # Graph calculated respiration phase data
     plt.subplot(2, 1, 2)
     plt.plot(diff_time_vals[data_start : data_end],
             diff[data_start : data_end],
             'r', label = 'Breath Phase')
 
-    # Fill above & below differential data to signal
+    # Fill above & below differential data to 
     # different breathing phases.
     plt.fill_between(
         x = diff_time_vals[data_start : data_end], 
@@ -205,10 +220,20 @@ def graphResp(vals, running, time_list, diff, diff_time_vals, startstop):
 
     # Bottom plot styling
     plt.xlabel('Time [s]')
-    # plt.xlim((3, 30))
+    # Top plot styling
+    plt.subplot(2, 1, 1)
+    plt.legend()
+    plt.title('Respiration Phase Analysis')
     
 
 def doRespAnalysis(filename, startstop):
+    """ 
+    Given a .txt with a list of FSR vals, and a tuple of the start
+    and stop times to show on the graph, calculate all data for graphing.
+    Actuall graphing is not done within this function so that this function
+    can be easily called form other python scripts without automatically 
+    generating a plot.
+    """
     vals, time_list= readRespData(filename, startstop)
         
     running = runningMean(vals)
@@ -217,8 +242,8 @@ def doRespAnalysis(filename, startstop):
     # Currently unused, extracts a dictionary of the start/stop 
     # time of each respiratory phase
     resp_startstop = findRespiratoryPhase(diff, diff_time_vals)
-
-    graphResp(vals, running, time_list, diff, diff_time_vals, startstop)
+    
+    return vals, running, time_list, diff, diff_time_vals
 
 
 def main():
@@ -228,7 +253,9 @@ def main():
     if len(args) > 0:
         startstop = (float(args[1]), float(args[2]))
     
-    doRespAnalysis(filename, startstop)
+    vals, running, time_list, diff, diff_time_vals = doRespAnalysis(filename, startstop)
+    
+    graphResp(vals, running, time_list, diff, diff_time_vals, startstop)
     plt.show()
 
 
