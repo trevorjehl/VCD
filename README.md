@@ -5,8 +5,10 @@ The main tool, stored in __sound_analayis.py__ is designed to be used from the c
 
 ![Sample Spectral Analysis](/Sample_Images/spectrogram_sound_analysis_sample.png)
 
-## Command Line Syntax (Unix Systems)
-### *Sound Analysis*
+## **Command Line Usage & Syntax (Unix Systems)**
+### *Lung/Vocal Fold Sound Analysis*
+---
+This function takes in a mono (or stereo, but it will be converted to mono) .wav file, and performs analysis of the file, with the command line output being an amplitude graph & spectrogram plot, as shown above. The green dots represent the spectral peaks at each spectrogram time period, or the first N (in this case, N=4) most intense frequencies at any given time.
 ```console
 foo@bar:~$ python3 sound_analysis.py filename.wav starting_time ending_time minimum_frequency maximum_frequency
 ```
@@ -20,6 +22,10 @@ foo@bar:~$ python3 sound_analysis.py filename.wav starting_time ending_time mini
 Both min & max frequency also apply butterworth bandpass filtering according to the passed in frequencies. Using the script as a collection of imported functions allows more granularity (i.e. choosing exactly what to graph, how to filter, etc.).
 
 ### *Respiration Analysis*
+---
+*respiration_phase.py* takes in the Arduino readings from a force sensitive resistor(FSR), and classifies the respiration phase based off of the force exerted onto the FSR. After running, the proogram will output a graph of the raw, cleaned, and calculated data, showing visual classification of each respiratory cycle.
+
+![Sample Spectral Analysis](/Sample_Images/sample_resp_analysis.png)
 ```console
 foo@bar:~$ python3 respiration_phase.py '~/your_breathing_data.txt' time_start time_end
 ```
