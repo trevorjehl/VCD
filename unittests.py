@@ -4,6 +4,7 @@ Unit tests for spectrogram_func.py.
 import unittest
 import numpy as np
 from sound_analysis import *
+from respiration_phase import *
 
 class testSpectrogram(unittest.TestCase):
 
@@ -31,7 +32,7 @@ class testSpectrogram(unittest.TestCase):
     
 
     def test_find_peaks(self):
-        filename = 'two_channel_test.wav'
+        filename = '/Test_Audio/two_channel_test.wav'
         audio_startstop = [1, 1.1]
 
         sample_rate, samples, audio_length, time_array, audio_startstop = readFile(filename, audio_startstop)
@@ -46,7 +47,10 @@ class testSpectrogram(unittest.TestCase):
         self.assertEqual(type(sorted_coords[0]), tuple)
         self.assertTrue(sorted_coords[0][0] == 1173.5595703125)
         self.assertAlmostEqual(sorted_coords[0][1], 19931.395, 3)
-
+    
+    def test_calcHz(self):
+        Hz = calcHz([0, 1000])
+        self.assertAlmostEqual(Hz, 2)
 
 if __name__ == '__main__':
     unittest.main()

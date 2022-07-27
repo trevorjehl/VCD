@@ -24,8 +24,8 @@ Both min & max frequency also apply butterworth bandpass filtering according to 
 foo@bar:~$ python3 respiration_phase.py '~/your_breathing_data.txt' time_start time_end
 ```
 - **'~/your_breathing_data.txt'**: The path & filename of a text file with integer values representing the force applied by a patient's chest measured via a force sesntive resistor.
-- **time_start**: The first time to graph.
-- **time_end**: The last time to graph.
+- **time_start**: The first time to display on the graph (x min, in seconds).
+- **time_end**: The last time to display on the graph (x max, in seconds).
 
 ## Branches
 - **main**: Implements spectral analysis through the scipy.signal.spectrogram function. Almost the enture development time of the project has been spent in this branch, and the other branches are there 

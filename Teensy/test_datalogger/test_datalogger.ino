@@ -62,9 +62,10 @@ String readFSR() {
 void writeDataSD(String dataString) {
   // open the file
   File dataFile = SD.open("datalog.txt", FILE_WRITE);
-  
+
   // if the file is available, write to it:
   if (dataFile) {
+    
     dataFile.println(dataString);
     dataFile.close();
     // print to the serial port too:
@@ -74,6 +75,7 @@ void writeDataSD(String dataString) {
     // if the file isn't open, pop up an error:
     Serial.println("Error opening datalog.txt");
   }
+  
 
 }
 
@@ -82,13 +84,14 @@ void loop() {
   //  Serial.println(hour());
   // make a string for assembling the data to log:
   String dataString = "";
-
+  dataString += String(millis());
+  dataString += String("; ");
+  
   // Read the value of the FSR, add it to data to be logged
   String FSR_Reading = readFSR();
   dataString += String(FSR_Reading);
 
   // Write dataString to a new line in txt file
   writeDataSD(dataString);
-
   delay(20); // run at a reasonable not-too-fast speed
 }
