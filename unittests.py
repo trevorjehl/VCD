@@ -48,6 +48,7 @@ class testSpectrogram(unittest.TestCase):
         self.assertTrue(sorted_coords[0][0] == 1173.5595703125)
         self.assertAlmostEqual(sorted_coords[0][1], 19931.395, 3)
     
+    
     def test_calcHz(self):
         Hz = calcHz([0, 1000])
         self.assertAlmostEqual(Hz, 2)

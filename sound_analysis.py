@@ -33,7 +33,7 @@ def readFile(filename, audio_startstop):
     """
     # Sample_rate = the sampling rate of the wav file
     # samples = the displacement at a time
-    sample_rate, samples = wavfile.read(filename)
+    sample_rate, samples = wavfile.read( )
 
     # If the passed in audio file is stereo, use
     # the audio from only one channel.
@@ -54,6 +54,7 @@ def readFile(filename, audio_startstop):
     time_array = (np.arange(samples.shape[0]) / samples.shape[0]) * audio_length
 
     return sample_rate, samples, audio_length, time_array, audio_startstop
+
 
 def downSample(x, y):
     """
@@ -254,6 +255,7 @@ def main():
 
     doAnalysis(filename, audio_startstop, audio_freqs)
     plt.show()
+
 
 if __name__ == '__main__':
     main()

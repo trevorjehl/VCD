@@ -22,11 +22,13 @@ def calcHz (millis):
     # Convert milliseconds to seconds
     seconds = [num / 1000 for num in millis]
     
+    # Calculate sampling frequency
     hz = len(seconds) / (seconds[1] - seconds[0])
+    print(hz)
     return hz
 
 
-def readRespData(filename, startstop):
+def readRespData(filename):
     """
     Given a file path & sample start and stop
     times (in sample #), open the file and
@@ -47,12 +49,20 @@ def readRespData(filename, startstop):
     with open(filename) as f:
         for line in f:
             lst = line.split(';')
+            
+            # If there is time data, add it to list
             if len(lst) > 1:
                 time = float(lst[0])
                 millis.append(time)
+            
+            # Otherwise, use a predefined random freq
             else:
                 Hz = 11.7
+                print(f"No time data found. Using Hz = {Hz}")
                 break
+
+            # If you have two times, stop reading file
+            # and calculate the sampling rate
             if len(millis) == 2:
                 Hz = calcHz(millis)
                 break
@@ -86,7 +96,7 @@ def calcDifferential(vals, time_list):
     diff = np.diff(vals, n = 1)
 
     # New time array for discrete differential array -- taking
-    # differential reduces size of array, new x vals are needed
+    # differential reduces size of array, new x vals are needed to graph
     diff_time_vals = []
     for i in range(1, len(vals)):
         end = time_list[i]
@@ -104,8 +114,8 @@ def findRespiratoryPhase(diff, diff_time_vals):
     a dictionary with a list of tuples that represent
     the start and end of each phase of respiration.
     """
-    # A dictionary where all 'insp' data has y>0, 'exp'
-    # has y<0
+    # A dictionary where all 'insp' data has y>0, 'exp' has y<0
+
     resp_phase = {'insp' : [], 'exp' : []}
 
     # Each 'insp' & 'exp' list contains tuples with the start
@@ -155,8 +165,8 @@ def findRespiratoryPhase(diff, diff_time_vals):
     # value above/below zero. The following code pushes the index
     # of the start and end to the left/right respectively
     for key, lst in resp_startstop.items():
-        resp_startstop[key] = [(diff_time_vals[diff_time_vals.index(tuple[0]) - 1], diff_time_vals[diff_time_vals.index(tuple[1]) + 1]) for tuple in lst ]
-
+        resp_startstop[key] = [(diff_time_vals[diff_time_vals.index(tuple[0]) - 1], diff_time_vals[diff_time_vals.index(tuple[1]) + 1]) for tuple in lst if (diff_time_vals.index(tuple[0]) - 1 >= 0) and (diff_time_vals.index(tuple[1]) + 1 < len(diff_time_vals))]
+    
     # *** Optional code for graphing vertical lines at the
     # start and end of each respiration phase (usful for visually
     #  checking that the code works) ***
@@ -234,7 +244,7 @@ def doRespAnalysis(filename, startstop):
     can be easily called form other python scripts without automatically 
     generating a plot.
     """
-    vals, time_list= readRespData(filename, startstop)
+    vals, time_list= readRespData(filename)
         
     running = runningMean(vals)
     diff, diff_time_vals = calcDifferential(running, time_list)

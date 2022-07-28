@@ -76,7 +76,6 @@ void writeDataSD(String dataString) {
     Serial.println("Error opening datalog.txt");
   }
   
-
 }
 
 
@@ -84,6 +83,8 @@ void loop() {
   //  Serial.println(hour());
   // make a string for assembling the data to log:
   String dataString = "";
+  // Add 'millis;' to the start of the datafile, 
+  // useful for determining sample rate
   dataString += String(millis());
   dataString += String("; ");
   
