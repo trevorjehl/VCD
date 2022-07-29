@@ -16,7 +16,7 @@ RUNNING_WINDOW_SIZE = 15
 
 def calcHz (millis):
     """
-    Given the first two lines of the respiration data,
+    Given the first two lines of the respiration data, (ex. [92010, 92096])
     calculate the sampling frequency in Hz (samples/s).
     """
     # Convert milliseconds to seconds
@@ -24,7 +24,6 @@ def calcHz (millis):
     
     # Calculate sampling frequency
     hz = len(seconds) / (seconds[1] - seconds[0])
-    print(hz)
     return hz
 
 
@@ -51,7 +50,7 @@ def readRespData(filename):
             lst = line.split(';')
             
             # If there is time data, add it to list
-            if len(lst) > 1:
+            if len(lst) > 1 and int(lst[0]):
                 time = float(lst[0])
                 millis.append(time)
             
@@ -61,7 +60,7 @@ def readRespData(filename):
                 print(f"No time data found. Using Hz = {Hz}")
                 break
 
-            # If you have two times, stop reading file
+            # If recorded two timestamps, stop reading file
             # and calculate the sampling rate
             if len(millis) == 2:
                 Hz = calcHz(millis)
