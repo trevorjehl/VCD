@@ -33,7 +33,7 @@ def readFile(filename, audio_startstop):
     """
     # Sample_rate = the sampling rate of the wav file
     # samples = the displacement at a time
-    sample_rate, samples = wavfile.read( )
+    sample_rate, samples = wavfile.read(filename)
 
     # If the passed in audio file is stereo, use
     # the audio from only one channel.
