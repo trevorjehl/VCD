@@ -130,5 +130,10 @@ dmypy.json
 
 .DS_Store
 office_sounds.wav
-.vscode/
-.vscode/arduino.json
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
