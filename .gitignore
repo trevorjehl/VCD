@@ -130,3 +130,5 @@ dmypy.json
 
 .DS_Store
 office_sounds.wav
+.vscode/
+.vscode/arduino.json
