@@ -25,7 +25,7 @@ Both min & max frequency also apply butterworth bandpass filtering according to 
 ---
 *respiration_phase.py* takes in the Arduino readings from a force sensitive resistor(FSR), and classifies the respiration phase based off of the force exerted onto the FSR. After running, the proogram will output a graph of the raw, cleaned, and calculated data, showing visual classification of each respiratory cycle.
 
-![Sample Spectral Analysis](/Sample_Images/sample_resp_analysis.png)
+![Sample Spectral Analysis](/Sample_Images/sample_resp_data.png)
 ```console
 foo@bar:~$ python3 respiration_phase.py '~/your_breathing_data.txt' time_start time_end
 ```
